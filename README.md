@@ -1,4 +1,4 @@
-# Jointly - Signal Synchronizer
+# Jointly: Signal Synchronizer
 
 ## The Syncing Process
 
@@ -18,10 +18,14 @@ Due to clock drift, which denotes the issue that a clock is not running at the e
 
 ## Example
 
+### Syncing  data
+
+The data has to be provided in pandas `DataFrame` with a `DateTimeIndex`.
+
 ```python
 import jointly
 
-devices = {
+sources = {
     'Faros': {
         'data': faros.data,
         'ref_column': 'acc_mag',
@@ -35,9 +39,60 @@ devices = {
         'ref_column': 'acc_mag',
     }
 }
-ref_device_name = 'Empatica'
+ref_source_name = 'Empatica'
 
 extractor = jointly.ShakeExtractor()
-synchronizer = jointly.Synchronizer(devices, ref_device_name, extractor)
+synchronizer = jointly.Synchronizer(sources, ref_source_name, extractor)
 synced_data = synchronizer.get_synced_data()
 ```
+
+### Saving data
+
+To define the tables, which should be saved, create a dictionary. Every key at root level defines the name of the corresponding file. The dictionary at the second level defines a list of columns, which should be saved in this file, for each source. The `save_data()` method will also automatically save all data from all sources in a file named `TOTAL.csv`. This can be deactivated by adding the argument `save_total_table = False`.
+
+```python
+tables = {
+    'ACC': {
+        'Faros': ['Accelerometer_X', 'Accelerometer_Y', 'Accelerometer_Z'],
+        'Empatica': ['acc_x', 'acc_y', 'acc_z'],
+        'Everion': ['accx_data', 'accy_data', 'accz_data'],
+    },
+    'PPG': {
+        'Empatica': ['bvp'],
+        'Everion': ['blood_pulse_wave', 'led2_data', 'led3_data'],
+    },
+    'EDA': {
+        'Empatica': ['eda'],
+        'Everion': ['gsr_electrode'],
+    },
+    'ECG': {
+        'Faros': ['ECG'],
+    },
+    'TEMP': {
+        'Empatica': ['temp'],
+        'Everion': ['temperature_object'],
+    },
+    'HR': {
+        'Empatica': ['hr'],
+        'Everion': ['heart_rate', 'heart_rate_quality'],
+    },   
+    'IBI': {
+        'Faros': ['HRV'],
+        'Empatica': ['ibi'],
+        'Everion': ['inter_pulse_interval', 'inter_pulse_interval_deviation'],
+    }
+}
+
+synchronizer.save_data(sync_dir_path, tables=tables)
+```
+
+## Logging
+
+To activate logging simply add the following lines to your code:
+
+```python
+from jointly.log import logger
+logger.setLevel(10)
+```
+
+This will give you insight into the shake detection, calculation of the timeshifts and stretching factor, and output plots of the segements.
