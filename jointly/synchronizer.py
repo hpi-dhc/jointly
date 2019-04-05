@@ -27,7 +27,6 @@ class Synchronizer:
         self.extractor = extractor
         self.ref_signals = self.prepare_ref_signals()
         self.tags = tags
-        self.truncate_data()
 
         if sampling_freq is not None:
             self.sampling_freq = sampling_freq
@@ -39,6 +38,8 @@ class Synchronizer:
             return
         before = self.tags.data.index.min() - pd.Timedelta(seconds=buffer)
         after = self.tags.data.index.max() + pd.Timedelta(seconds=buffer)
+
+        self.ref_signals = self.ref_signals.truncate(before=before, after=after)
         for source in self.sources.values():
             source['data'] = source['data'].truncate(before=before, after=after)
 
@@ -195,14 +196,14 @@ class Synchronizer:
         return synced_data
     
     def save_data(self, path, tables=None, save_total_table=True):
-        sync_params = self.get_sync_params()
-        synced_data = self.get_synced_data()
-
         if 'SYNC' in tables.keys():
             raise ValueError('SYNC must not be one of the table names. It is reserved for the synchronization paramters.')
 
         if save_total_table and 'TOTAL' in tables.keys():
             raise ValueError('TOTAL must not be one of the table names, if the table with all data should be saved.')
+        
+        sync_params = self.get_sync_params()
+        synced_data = self.get_synced_data()
 
         # Save sync params
         pd.DataFrame(sync_params).to_csv(os.path.join(path, 'SYNC.csv'))
@@ -210,7 +211,6 @@ class Synchronizer:
         # Save custom tables
         logger.info(tables)
         if tables is not None:
-            logger.info('tables is not none')
             for table_name, table_spec in tables.items():
                 table_df = pd.DataFrame()
                 if self.tags is not None:

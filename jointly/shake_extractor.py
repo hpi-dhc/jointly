@@ -75,9 +75,9 @@ class ShakeExtractor(AbstractExtractor):
             start_window = signals[column].first_valid_index() + window
             end_window = signals[column].last_valid_index() - window
             shakes_first = list(filter(lambda sequence: sequence[0].index[0] < start_window, shakes))
-            logger.debug('{} shakes in start window for {}.'.format(len(shakes_first), column))
+            logger.debug('{} shakes in before {} for {}.'.format(len(shakes_first), start_window, column))
             shakes_second = list(filter(lambda sequence: sequence[-1].index[0] > end_window, shakes))
-            logger.debug('{} shakes in end window for {}.'.format(len(shakes_second), column))
+            logger.debug('{} shakes in after {} for {}.'.format(len(shakes_second), end_window, column))
             
             # choose sequence with highest weight
             if len(shakes_first) > 0:
