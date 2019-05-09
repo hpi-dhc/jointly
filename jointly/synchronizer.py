@@ -25,7 +25,7 @@ class Synchronizer:
         self.sources = sources
         self.ref_source_name = ref_source_name
         self.extractor = extractor
-        self.ref_signals = self.prepare_ref_signals()
+        self.ref_signals = self._prepare_ref_signals()
         self.tags = tags
 
         if sampling_freq is not None:
@@ -43,7 +43,7 @@ class Synchronizer:
         for source in self.sources.values():
             source['data'] = source['data'].truncate(before=before, after=after)
 
-    def prepare_ref_signals(self):
+    def _prepare_ref_signals(self):
         ref_signals = pd.DataFrame()
         for source_name, source in self.sources.items():
             signal = source['data'][source['ref_column']].dropna()
@@ -55,18 +55,18 @@ class Synchronizer:
     def get_max_ref_frequency(self):
         if self.ref_signals is None:
             raise ValueError('Unable to get maximum frequency: Reference signals undefined.')
-        frequencies = self.ref_signals.aggregate(Synchronizer.infer_freq)
+        frequencies = self.ref_signals.aggregate(Synchronizer._infer_freq)
         return np.amax(frequencies)
 
     @staticmethod
-    def infer_freq(series):
+    def _infer_freq(series):
         index = series.dropna().index
         timedeltas = index[1:] - index[:-1]
         median = np.median(timedeltas)
         return np.timedelta64(1, 's') / median
 
     @staticmethod
-    def stretch_signals(source, factor, start_time=None):
+    def _stretch_signals(source, factor, start_time=None):
         """Returns copy of DataFrame with stretched DateTimeIndex."""
         df = source.copy()
         if start_time is None:
@@ -78,14 +78,14 @@ class Synchronizer:
         return df
 
     @staticmethod
-    def get_stretch_factor(segments, timeshifts):
+    def _get_stretch_factor(segments, timeshifts):
         old_length = segments['second']['start'] - segments['first']['start']
         new_length = old_length + timeshifts['second'] - timeshifts['first']
         stretch_factor = new_length / old_length
         return stretch_factor
 
     @staticmethod
-    def get_timeshifts(dataframe, columns, segments):
+    def _get_timeshifts(dataframe, columns, segments):
         """Returns timeshifts to synchronize columns[1] with columns[0].
         First signal in columns will be used as reference.
         Expects equidistant sampled signals.
@@ -134,7 +134,7 @@ class Synchronizer:
 
         return timeshifts
 
-    def calculate_sync_params(self):
+    def _calculate_sync_params(self):
         dataframe = self.ref_signals.copy()
         start_time = self.ref_signals.index.min()
         self.sources[self.ref_source_name]['timeshift'] = None
@@ -149,15 +149,14 @@ class Synchronizer:
             if column == self.ref_source_name:
                 continue
             else:
-                timeshifts = Synchronizer.get_timeshifts(df_equi, [self.ref_source_name, column], segments)
+                timeshifts = Synchronizer._get_timeshifts(df_equi, [self.ref_source_name, column], segments)
                 logger.debug('Timedelta between shifts before stretching: {}'.format(timeshifts['first'] - timeshifts['second']))
-                self.sources[column]['stretch_factor'] = Synchronizer.get_stretch_factor(segments[column], timeshifts)
+                self.sources[column]['stretch_factor'] = Synchronizer._get_stretch_factor(segments[column], timeshifts)
                 logger.info('Stretch factor for {}: {}'.format(column, self.sources[column]['stretch_factor']))
                 
                 # stretch signal and exchange it in dataframe
-                signal_stretched = Synchronizer.stretch_signals(pd.DataFrame(dataframe[column]), self.sources[column]['stretch_factor'], start_time)
+                signal_stretched = Synchronizer._stretch_signals(pd.DataFrame(dataframe[column]), self.sources[column]['stretch_factor'], start_time)
                 dataframe = dataframe.drop(column, axis='columns').join(signal_stretched, how='outer')
-                
 
         # Resample again with stretched signal
         df_equi = get_equidistant_signals(dataframe, self.sampling_freq)
@@ -168,29 +167,30 @@ class Synchronizer:
             if column == self.ref_source_name:
                 continue
             else:
-                timeshifts = Synchronizer.get_timeshifts(df_equi, [self.ref_source_name, column], segments)
+                timeshifts = Synchronizer._get_timeshifts(df_equi, [self.ref_source_name, column], segments)
                 timedelta = timeshifts['first'] - timeshifts['second']
                 if timedelta > pd.Timedelta(0):
                     logger.warning('Timedelta between shifts after stretching: {}'.format(timedelta))
                 logger.info('Timeshift for {}: {}'.format(column, timeshifts['first']))
                 self.sources[column]['timeshift'] = timeshifts['first']
 
-    def get_sync_params(self):
+    def get_sync_params(self, recalculate=False):
         selected_keys = ['timeshift', 'stretch_factor']
-        if 'timeshift' not in self.sources[self.ref_source_name]:
-            self.calculate_sync_params()
+        if recalculate or 'timeshift' not in self.sources[self.ref_source_name]:
+            self._calculate_sync_params()
         return {
             source_name: {
                 key: value for key, value in source.items() if key in selected_keys
             } for source_name, source in self.sources.items()}
 
-    def get_synced_data(self):
+    def get_synced_data(self, recalculate=False):
+        get_sync_params(recalculate)
         synced_data = {}
         start_time = self.ref_signals.index.min()
         for source_name, source in self.sources.items():
             data = source['data'].copy()
             if source['stretch_factor'] is not 1:
-                data = Synchronizer.stretch_signals(data, source['stretch_factor'], start_time)
+                data = Synchronizer._stretch_signals(data, source['stretch_factor'], start_time)
                 data = data.shift(1, freq=source['timeshift'])
             synced_data[source_name] = data
         return synced_data
