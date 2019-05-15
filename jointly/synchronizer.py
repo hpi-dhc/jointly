@@ -184,7 +184,7 @@ class Synchronizer:
             } for source_name, source in self.sources.items()}
 
     def get_synced_data(self, recalculate=False):
-        get_sync_params(recalculate)
+        self.get_sync_params(recalculate)
         synced_data = {}
         start_time = self.ref_signals.index.min()
         for source_name, source in self.sources.items():
