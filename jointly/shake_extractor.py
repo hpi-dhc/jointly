@@ -11,7 +11,7 @@ pp = pprint.PrettyPrinter()
 
 class ShakeExtractor(AbstractExtractor):
 
-    window = 300
+    window = 600
     """time window in seconds in which to look for peaks from start and end of signal"""
     threshold = 0.3
     """threshold for peak detection"""
@@ -20,25 +20,32 @@ class ShakeExtractor(AbstractExtractor):
     min_length = 6
     """minimum number of peaks per sequence"""
     time_buffer = 1
-    """time in seconds will be padded to first and last peak"""
+    """time in seconds will be padded to first and last peak for timestamps of segment"""
 
     def get_shake_weight(self, x):
         return np.median(x) + np.mean(x)
 
-    def get_peak_sequences(self, signals, column):
+    def get_peak_sequences(self, signals, column, start_window, end_window):
         """Returns index list of peak sequences from a normalized signal.
         Peaks, that have no adjacent peaks within distance in milliseconds, are filtered.
         Sequences with a length less than min_length peaks are filtered.
         """
         sequences = []
         logger.debug('Use peak threshold {}'.format(self.threshold))
-        
-        peaks, _properties = scipy.signal.find_peaks(signals[column], height=self.threshold)
+
+        start_part = signals[column].truncate(after=start_window)
+        peaks_start, _properties = scipy.signal.find_peaks(start_part, height=self.threshold)
+
+        end_part = signals[column].truncate(before=end_window)
+        peaks_end, _properties = scipy.signal.find_peaks(end_part, height=self.threshold)
+        peaks_end = peaks_end + signals.index.get_loc(end_part.index[0])
+
+        peaks = [*peaks_start, *peaks_end]
         logger.debug('Found {} peaks for {}'.format(len(peaks), column))
-        
+
         for pos, index in enumerate(peaks):
             row = signals.iloc[[index]]
-            if pos==0:
+            if pos == 0:
                 # start initial sequence
                 sequences.append([row.index])
                 continue
@@ -52,11 +59,11 @@ class ShakeExtractor(AbstractExtractor):
                 # start new sequence
                 sequences[len(sequences)-1].append(row.index)
         logger.debug('Merged peaks within {} ms to {} sequences for {}'.format(self.distance, len(sequences), column))
-        
+
         # filter sequences with less than min_length peaks
         sequences_filtered = list(filter(lambda x: len(x) >= self.min_length, sequences))
         logger.debug('{} sequences did satisfy minimum length of {} for {}'.format(len(sequences_filtered), self.min_length, column))
-        
+
         return sequences_filtered
 
     def get_segments(self, signals):
@@ -67,18 +74,18 @@ class ShakeExtractor(AbstractExtractor):
         window = pd.Timedelta(seconds=self.window) # time window from start and end in which to look for sequences
 
         for column in columns:
-            peaks = self.get_peak_sequences(signals, column)
-            # map peak indices to their values
-            shakes = list(map(lambda sequence: (list(map(lambda index: signals[column][index], sequence))), peaks))
-            
-            # select sequences in start/end window
             start_window = signals[column].first_valid_index() + window
             end_window = signals[column].last_valid_index() - window
+            peaks = self.get_peak_sequences(signals, column, start_window, end_window)
+            # map peak indices to their values
+            shakes = list(map(lambda sequence: (list(map(lambda index: signals[column][index], sequence))), peaks))
+
+            # select sequences in start/end window
             shakes_first = list(filter(lambda sequence: sequence[0].index[0] < start_window, shakes))
             logger.debug('{} shakes in before {} for {}.'.format(len(shakes_first), start_window, column))
             shakes_second = list(filter(lambda sequence: sequence[-1].index[0] > end_window, shakes))
             logger.debug('{} shakes in after {} for {}.'.format(len(shakes_second), end_window, column))
-            
+
             # choose sequence with highest weight
             if len(shakes_first) > 0:
                 first = max(shakes_first, key=self.get_shake_weight)
@@ -91,6 +98,5 @@ class ShakeExtractor(AbstractExtractor):
                 end = second[-1].index[0] + time_buffer
                 self._set_second_segment(column, start, end)
             logger.info('Shake segments for {}:\n{}'.format(column, pp.pformat(self.segments[column])))
-        
+
         return self.segments
-    
