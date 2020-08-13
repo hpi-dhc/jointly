@@ -115,7 +115,8 @@ class Synchronizer:
             # get shift in samples
             shift_in_samples = np.argmax(cross_corr) - len(sig_segment) - 1
             # get timestamp at which sig_segment must start to sync signals
-            max_corr_ts = dataframe.index[dataframe.index.get_loc(ref_start) + shift_in_samples]
+            ##max_corr_ts = dataframe.index[dataframe.index.get_loc(ref_start) + shift_in_samples]
+            max_corr_ts = dataframe.index[dataframe.index.get_loc(ref_start, method='nearest') + shift_in_samples]
             logger.debug('Highest correlation with start at {} with {}.'.format(max_corr_ts, np.max(cross_corr)))
             
             # calculate timeshift to move signal to maximize correlation
