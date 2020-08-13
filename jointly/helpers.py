@@ -24,7 +24,7 @@ def get_equidistant_signals(signals, frequency):
                                         end=pd.to_datetime(signals.index.max(), unit='s'),
                                         freq=freq))
     df = df.join(signals.copy(), how='outer')
-    df = df.interpolate(method='time', limit_area='inside').resample(freq).asfreq()
+    df = df.interpolate(method='time', limit_area='inside').asfreq(freq)
     return df
 
 
