@@ -1,10 +1,7 @@
-import operator
-import pandas as pd
-import numpy as np
 import matplotlib.cm
+import numpy as np
+import pandas as pd
 from matplotlib import pyplot
-
-from .log import logger
 
 
 ### Signal processing
@@ -14,6 +11,7 @@ def normalize(x):
     xn = x - np.mean(x)
     xn = xn / np.max(np.abs(xn))
     return xn
+
 
 def get_equidistant_signals(signals, frequency):
     """Returns copy of dataframe with signals
@@ -49,15 +47,16 @@ def plot_signals(df, cols=None, title=None, tags=None):
     pyplot.legend()
     pyplot.show()
 
+
 def plot_segments(dataframe, segments, together=True, seperate=True):
     signal_names = list(segments.keys())
     segment_names = list(segments[signal_names[0]].keys())
-    
+
     if together is True:
         # plot signals together
         ncols = 1
         nrows = len(segment_names)
-        fig, axes = pyplot.subplots(nrows, ncols, figsize=(15, 4*nrows))
+        fig, axes = pyplot.subplots(nrows, ncols, figsize=(15, 4 * nrows))
         for index, segment_name in enumerate(segment_names):
             axes[index].set_title('{} segment'.format(segment_name))
             signals_with_segment = list(filter(lambda x: segment_name in segments[x], signal_names))
@@ -65,13 +64,13 @@ def plot_segments(dataframe, segments, together=True, seperate=True):
             end = np.amax([segments[x][segment_name]['end'] for x in signals_with_segment])
             dataframe[start:end].plot(ax=axes[index])
         fig.tight_layout()
-    
+
     if seperate is True:
         # plot signals seperately
         ncols = len(segment_names)
         nrows = len(segments.keys())
         cmap = matplotlib.cm.get_cmap('tab10')
-        fig, axes = pyplot.subplots(nrows, ncols, figsize=(15, 4*nrows))
+        fig, axes = pyplot.subplots(nrows, ncols, figsize=(15, 4 * nrows))
         for index, signal_name in enumerate(segments.keys()):
             for index_seg, segment_name in enumerate(segment_names):
                 if segment_name not in segments[signal_name]:

@@ -1,5 +1,6 @@
 import abc
 
+
 class AbstractExtractor(metaclass=abc.ABCMeta):
 
     def __init__(self):
@@ -34,7 +35,7 @@ class AbstractExtractor(metaclass=abc.ABCMeta):
                 'first': {},
                 'second': {},
             }
-    
+
     def _set_first_segment(self, column_name, start, end):
         self.segments[column_name]['first']['start'] = start
         self.segments[column_name]['first']['end'] = end
