@@ -1,14 +1,15 @@
-import os
 import logging
-import numbers
-import scipy.signal
+import os
+
 import numpy as np
 import pandas as pd
+import scipy.signal
 from matplotlib import pyplot
 
-from .log import logger
-from .helpers import normalize, get_equidistant_signals
 from .abstract_extractor import AbstractExtractor
+from .helpers import normalize, get_equidistant_signals
+from .log import logger
+
 
 class Synchronizer:
     @property
@@ -21,7 +22,7 @@ class Synchronizer:
             raise TypeError('Extractor needs to be a subclass of AbstractExtractor.')
         self._extractor = value
 
-    def __init__(self, sources, ref_source_name, extractor, sampling_freq=None, tags=None): 
+    def __init__(self, sources, ref_source_name, extractor, sampling_freq=None, tags=None):
         self.sources = sources
         self.ref_source_name = ref_source_name
         self.extractor = extractor
@@ -49,9 +50,9 @@ class Synchronizer:
             signal = source['data'][source['ref_column']].dropna()
             ref_signals = ref_signals.join(signal, how='outer')
             ref_signals.rename(columns=(lambda x: source_name if x == source['ref_column'] else x), inplace=True)
-        ref_signals = ref_signals.apply(normalize)            
+        ref_signals = ref_signals.apply(normalize)
         return ref_signals
-    
+
     def get_max_ref_frequency(self):
         if self.ref_signals is None:
             raise ValueError('Unable to get maximum frequency: Reference signals undefined.')
@@ -94,13 +95,13 @@ class Synchronizer:
         segment_names = ['first', 'second']
         ref_column = columns[0]
         sig_column = columns[1]
-        
+
         if logger.isEnabledFor(logging.INFO):
             fig, axes = pyplot.subplots(1, 2, figsize=(15, 4))
 
         for index, segment in enumerate(segment_names):
             logger.debug('Calculate timeshift of {} segment for {} to {}.'.format(segment, sig_column, ref_column))
-            
+
             # get segments from both signals
             ref_start = segments[ref_column][segment]['start']
             ref_end = segments[ref_column][segment]['end']
@@ -109,7 +110,7 @@ class Synchronizer:
             sig_start = segments[sig_column][segment]['start']
             sig_end = segments[sig_column][segment]['end']
             sig_segment = dataframe[sig_column][sig_start:sig_end]
-                    
+
             # calculate cross-correlation of segments
             cross_corr = scipy.signal.correlate(ref_segment, sig_segment)
             # get shift in samples
@@ -117,11 +118,11 @@ class Synchronizer:
             # get timestamp at which sig_segment must start to sync signals
             max_corr_ts = dataframe.index[dataframe.index.get_loc(ref_start, method='nearest') + shift_in_samples]
             logger.debug('Highest correlation with start at {} with {}.'.format(max_corr_ts, np.max(cross_corr)))
-            
+
             # calculate timeshift to move signal to maximize correlation
             timeshifts[segment] = max_corr_ts - sig_start
             logger.debug('Timeshift is {}.'.format(str(timeshifts[segment])))
-            
+
             # plot shifted segments
             if logger.isEnabledFor(logging.INFO):
                 df = dataframe.copy()
@@ -153,7 +154,7 @@ class Synchronizer:
                 logger.debug('Timedelta between shifts before stretching: {}'.format(timeshifts['first'] - timeshifts['second']))
                 self.sources[column]['stretch_factor'] = Synchronizer._get_stretch_factor(segments[column], timeshifts)
                 logger.info('Stretch factor for {}: {}'.format(column, self.sources[column]['stretch_factor']))
-                
+
                 # stretch signal and exchange it in dataframe
                 signal_stretched = Synchronizer._stretch_signals(pd.DataFrame(dataframe[column]), self.sources[column]['stretch_factor'], start_time)
                 dataframe = dataframe.drop(column, axis='columns').join(signal_stretched, how='outer')
@@ -195,14 +196,14 @@ class Synchronizer:
                 data = data.shift(1, freq=source['timeshift'] / 2)
             synced_data[source_name] = data
         return synced_data
-    
+
     def save_data(self, path, tables=None, save_total_table=True):
         if 'SYNC' in tables.keys():
             raise ValueError('SYNC must not be one of the table names. It is reserved for the synchronization paramters.')
 
         if save_total_table and 'TOTAL' in tables.keys():
             raise ValueError('TOTAL must not be one of the table names, if the table with all data should be saved.')
-        
+
         sync_params = self.get_sync_params()
         synced_data = self.get_synced_data()
 

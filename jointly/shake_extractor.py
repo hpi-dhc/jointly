@@ -1,16 +1,17 @@
+import pprint
+
 import numpy as np
 import pandas as pd
-import scipy.signal
 import scipy.interpolate
-import pprint
+import scipy.signal
 
 from .abstract_extractor import AbstractExtractor
 from .log import logger
 
 pp = pprint.PrettyPrinter()
 
-class ShakeExtractor(AbstractExtractor):
 
+class ShakeExtractor(AbstractExtractor):
     window = 600
     """time window in seconds in which to look for peaks from start and end of signal"""
     threshold = 0.3
@@ -49,7 +50,7 @@ class ShakeExtractor(AbstractExtractor):
                 # start initial sequence
                 sequences.append([row.index])
                 continue
-            row_prev = signals.iloc[[peaks[pos-1]]]
+            row_prev = signals.iloc[[peaks[pos - 1]]]
             time = pd.to_datetime(row.index)
             time_prev = pd.to_datetime(row_prev.index)
             if time_prev + pd.Timedelta(milliseconds=self.distance) < time:
@@ -57,7 +58,7 @@ class ShakeExtractor(AbstractExtractor):
                 sequences.append([row.index])
             else:
                 # start new sequence
-                sequences[len(sequences)-1].append(row.index)
+                sequences[len(sequences) - 1].append(row.index)
         logger.debug('Merged peaks within {} ms to {} sequences for {}'.format(self.distance, len(sequences), column))
 
         # filter sequences with less than min_length peaks
