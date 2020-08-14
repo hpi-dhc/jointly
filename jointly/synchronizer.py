@@ -189,9 +189,10 @@ class Synchronizer:
         start_time = self.ref_signals.index.min()
         for source_name, source in self.sources.items():
             data = source['data'].copy()
-            if source['stretch_factor'] is not 1:
+            if source['stretch_factor'] != 1:
                 data = Synchronizer._stretch_signals(data, source['stretch_factor'], start_time)
-                data = data.shift(1, freq=source['timeshift'])
+            if source['timeshift'] is not None:
+                data = data.shift(1, freq=source['timeshift'] / 2)
             synced_data[source_name] = data
         return synced_data
     
