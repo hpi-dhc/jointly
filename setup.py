@@ -12,7 +12,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'Jointly'
+NAME = 'jointly'
 DESCRIPTION = 'Synchronize multiple signals from different sources.'
 URL = None
 EMAIL = 'felix.musmann@student.hpi.de'
