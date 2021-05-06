@@ -10,9 +10,10 @@ class SegmentSelector:
         if segments is None:
             self.segments = {
                 signal: {
-                    'first': {},
-                    'second': {},
-                } for signal in signals.columns
+                    "first": {},
+                    "second": {},
+                }
+                for signal in signals.columns
             }
         self._display_plots()
 
@@ -23,13 +24,13 @@ class SegmentSelector:
 
         for index, name in enumerate(self.signals.columns):
             axes[index].set_title(name)
-            axes[index].plot(self.signals[name].interpolate(method='time').values)
+            axes[index].plot(self.signals[name].interpolate(method="time").values)
         fig.tight_layout()
 
-        bp_id = fig.canvas.mpl_connect('button_press_event', self._on_click)
+        bp_id = fig.canvas.mpl_connect("button_press_event", self._on_click)
 
     def _display_segments(self):
-        print('Do')
+        print("Do")
 
     def _on_click(self, event):
         # if not event.dblclick:
@@ -40,8 +41,8 @@ class SegmentSelector:
         title = event.inaxes.title.get_text()
         index = int(event.xdata)
 
-        for segment in ['first', 'second']:
-            for time in ['start', 'end']:
+        for segment in ["first", "second"]:
+            for time in ["start", "end"]:
                 if time not in self.segments[title][segment]:
                     self.segments[title][segment][time] = self.signals.index[index]
                     break
