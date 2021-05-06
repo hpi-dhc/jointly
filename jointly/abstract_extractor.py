@@ -2,7 +2,6 @@ import abc
 
 
 class AbstractExtractor(metaclass=abc.ABCMeta):
-
     def __init__(self):
         self.segments = {}
 
@@ -12,7 +11,7 @@ class AbstractExtractor(metaclass=abc.ABCMeta):
         return dictionary with start and end timestamps for each signal.
 
         Format of dictionary:
-        >>> { 
+        >>> {
         >>>     'column_name': {
         >>>         'first': {
         >>>             'start': timestamp,
@@ -25,21 +24,21 @@ class AbstractExtractor(metaclass=abc.ABCMeta):
         >>>     },
         >>>     ...
         >>> }
-        
+
         """
 
     def _init_segments(self, columns):
         self.segments = {}
         for column_name in columns:
             self.segments[column_name] = {
-                'first': {},
-                'second': {},
+                "first": {},
+                "second": {},
             }
 
     def _set_first_segment(self, column_name, start, end):
-        self.segments[column_name]['first']['start'] = start
-        self.segments[column_name]['first']['end'] = end
+        self.segments[column_name]["first"]["start"] = start
+        self.segments[column_name]["first"]["end"] = end
 
     def _set_second_segment(self, column_name, start, end):
-        self.segments[column_name]['second']['start'] = start
-        self.segments[column_name]['second']['end'] = end
+        self.segments[column_name]["second"]["start"] = start
+        self.segments[column_name]["second"]["end"] = end
