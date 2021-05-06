@@ -18,16 +18,18 @@ def get_equidistant_signals(signals, frequency):
     """Returns copy of dataframe with signals
     sampled equidistantly at the specified frequency.
     """
-    freq = "{}us".format(int(1e6 / frequency))
+    freq = "{}N".format(int(1e9 / frequency))
     df = pd.DataFrame(
+        {
+            name: signals[name].dropna().resample(freq).nearest()
+            for name in signals.columns
+        },
         index=pd.date_range(
             start=pd.to_datetime(signals.index.min(), unit="s"),
             end=pd.to_datetime(signals.index.max(), unit="s"),
             freq=freq,
-        )
+        ),
     )
-    df = df.join(signals.copy(), how="outer")
-    df = df.interpolate(method="time", limit_area="inside").asfreq(freq)
     return df
 
 

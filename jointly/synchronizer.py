@@ -1,14 +1,17 @@
-import logging
 import os
+import logging
+from pprint import pprint
+from typing import Dict
 
+import scipy.signal
 import numpy as np
 import pandas as pd
-import scipy.signal
 from matplotlib import pyplot
 
-from .abstract_extractor import AbstractExtractor
-from .helpers import normalize, get_equidistant_signals
 from .log import logger
+from .helpers import normalize, get_equidistant_signals
+from .abstract_extractor import AbstractExtractor
+from .synchronization_errors import ShakeMissingException, StartEqualsEndError
 
 
 class Synchronizer:
@@ -103,8 +106,22 @@ class Synchronizer:
         ref_column = columns[0]
         sig_column = columns[1]
 
+        fig, axes = None, None
         if logger.isEnabledFor(logging.INFO):
             fig, axes = pyplot.subplots(1, 2, figsize=(15, 4))
+
+        # Check that all segments are available
+        for col in columns:
+            for segment in segment_names:
+                for part in ["start", "end"]:
+                    try:
+                        segments[col][segment][part]
+                    except KeyError:
+                        print("Dumping all detected segments:")
+                        pprint(segments)
+                        raise ShakeMissingException(
+                            f"No {segment} shake detected for {col}, missing the {part}"
+                        )
 
         for index, segment in enumerate(segment_names):
             logger.debug(
@@ -125,7 +142,7 @@ class Synchronizer:
             # calculate cross-correlation of segments
             cross_corr = scipy.signal.correlate(ref_segment, sig_segment)
             # get shift in samples
-            shift_in_samples = np.argmax(cross_corr) - len(sig_segment) - 1
+            shift_in_samples = np.argmax(cross_corr) - len(sig_segment) + 1
             # get timestamp at which sig_segment must start to sync signals
             max_corr_ts = dataframe.index[
                 dataframe.index.get_loc(ref_start, method="nearest") + shift_in_samples
@@ -142,15 +159,27 @@ class Synchronizer:
 
             # plot shifted segments
             if logger.isEnabledFor(logging.INFO):
-                df = dataframe.copy()
-                df[sig_column] = df[sig_column].shift(1, freq=timeshifts[segment])
-                axes[index].set_title(
-                    "{} segment of {c[0]} and {c[1]}".format(segment, c=columns)
-                )
-                df[columns][ref_start:ref_end].plot(ax=axes[index])
+                try:
+                    df = dataframe.copy()
+                    df[sig_column] = df[sig_column].shift(1, freq=timeshifts[segment])
+                    if axes is not None:
+                        axes[index].set_title(
+                            "{} segment of {c[0]} and {c[1]}".format(segment, c=columns)
+                        )
+                        df[columns][ref_start:ref_end].plot(ax=axes[index])
+                except MemoryError:
+                    logger.warn(
+                        f"Couldn't allocate enough memory to plot shifted segments, skipping"
+                    )
 
         if logger.isEnabledFor(logging.INFO):
-            fig.tight_layout()
+            try:
+                if fig is not None:
+                    fig.tight_layout()
+            except MemoryError:
+                logger.warn(
+                    f"Couldn't allocate enough memory to plot shifted segments, skipping"
+                )
 
         return timeshifts
 
@@ -177,9 +206,14 @@ class Synchronizer:
                         timeshifts["first"] - timeshifts["second"]
                     )
                 )
-                self.sources[column][
-                    "stretch_factor"
-                ] = Synchronizer._get_stretch_factor(segments[column], timeshifts)
+                try:
+                    self.sources[column][
+                        "stretch_factor"
+                    ] = Synchronizer._get_stretch_factor(segments[column], timeshifts)
+                except ZeroDivisionError:
+                    raise StartEqualsEndError(
+                        "First and last segment have been identified as exactly the same. Bad window, maybe?"
+                    )
                 logger.info(
                     "Stretch factor for {}: {}".format(
                         column, self.sources[column]["stretch_factor"]
@@ -188,12 +222,14 @@ class Synchronizer:
 
                 # stretch signal and exchange it in dataframe
                 signal_stretched = Synchronizer._stretch_signals(
-                    pd.DataFrame(dataframe[column]),
+                    pd.DataFrame(dataframe[column]).dropna(),
                     self.sources[column]["stretch_factor"],
                     start_time,
                 )
-                dataframe = dataframe.drop(column, axis="columns").join(
-                    signal_stretched, how="outer"
+                dataframe = (
+                    dataframe.drop(column, axis="columns")
+                    .join(signal_stretched, how="outer")
+                    .astype(pd.SparseDtype("float"))
                 )
 
         # Resample again with stretched signal
@@ -229,7 +265,7 @@ class Synchronizer:
             for source_name, source in self.sources.items()
         }
 
-    def get_synced_data(self, recalculate=False):
+    def get_synced_data(self, recalculate=False) -> Dict[str, pd.DataFrame]:
         self.get_sync_params(recalculate)
         synced_data = {}
         start_time = self.ref_signals.index.min()
@@ -240,9 +276,25 @@ class Synchronizer:
                     data, source["stretch_factor"], start_time
                 )
             if source["timeshift"] is not None:
-                data = data.shift(1, freq=source["timeshift"] / 2)
+                data = data.shift(1, freq=source["timeshift"])
             synced_data[source_name] = data
         return synced_data
+
+    def save_pickles(self, path) -> Dict[str, pd.DataFrame]:
+        """
+        Save a pickled, synced, dataframe for each source file. Does not save a total table. Sync parameters are saved as SYNC.PICKLE.
+
+        Returns the synced data. Sync parameter dataframe is in a dictionary entry with the key "SYNC".
+        """
+        sync_params = pd.DataFrame(self.get_sync_params())
+        synced_data = self.get_synced_data()
+
+        sync_params.to_csv(os.path.join(path, "SYNC.csv"))
+
+        for source_name, synced_df in synced_data.items():
+            synced_df.to_pickle(os.path.join(path, f"{source_name.upper()}.PICKLE"))
+
+        return {**synced_data, "SYNC": sync_params}
 
     def save_data(self, path, tables=None, save_total_table=True):
         if "SYNC" in tables.keys():
