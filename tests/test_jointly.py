@@ -5,8 +5,6 @@ import random
 
 import pytest
 
-from jointly import jointly
-
 
 @pytest.fixture
 def generate_numbers():
@@ -20,16 +18,8 @@ def generate_numbers():
 
 def test_sum_numbers(generate_numbers):
     """Sample test function for sum_numbers, using pytest fixture."""
+    print("hello")
 
-    our_result = jointly.sum_numbers(generate_numbers)
-    assert our_result == sum(generate_numbers)
-
-
-def test_max_number(generate_numbers):
-    """Sample test function for max_number, using pytest fixture."""
-
-    our_result = jointly.max_number(generate_numbers)
-    assert our_result == max(generate_numbers)
 
 
 # def test_max_number_bad(generate_numbers):
