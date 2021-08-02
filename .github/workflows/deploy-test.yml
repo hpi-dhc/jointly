@@ -1,0 +1,17 @@
+name: Deploy to PyPi
+
+on: [ push, pull_request ]
+
+jobs:
+    build-n-publish-testing:
+        runs-on: ubuntu-latest
+        steps:
+        -   name: Build and publish to pypi
+            uses: JRubics/poetry-publish@v1.6
+            with:
+                python_version: '3.7.1'
+                poetry_version: '==1.1.7'  # (PIP version specifier syntax)
+                pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
+                repository_name: 'testpypi'
+                repository_url: 'https://test.pypi.org/legacy/'
+

@@ -1,0 +1,50 @@
+name: Testing, linting, and coverage
+
+on: [ push, pull_request ]
+
+jobs:
+    test-lint-coverage:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version: [ 3.7, 3.8, 3.9 ]
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Set up Python ${{ matrix.python-version }}
+                uses: actions/setup-python@v2
+                with:
+                    python-version: ${{ matrix.python-version }}
+
+            -   name: Install Poetry
+                uses: snok/install-poetry@v1
+
+            -   name: Lint with black
+                uses: psf/black@stable
+
+            -   name: Install dependencies
+                run: |
+                    poetry install
+
+            -   name: Test with pytest
+                run: |
+                    poetry run python -m pytest
+            -   if: ${{ matrix.python-version == '3.9' }}
+                name: Calculate coverage
+                run: |
+                    poetry run coverage run --source=devicely -m pytest
+                    poetry run coverage xml
+                    COVERAGE=$(python -c "import xml.etree.ElementTree as ET; print(int(float(ET.parse('coverage.xml').getroot().attrib['line-rate']) * 100))")
+                    COLOR=$(echo $COVERAGE | python -c "import sys; from bisect import bisect; i=bisect([0,60,70,80,95,100], int(sys.stdin.read()))-1; print(['red', 'orange', 'yellow', 'yellowgreen', 'green', 'brightgreen'][i])")
+                    echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+                    echo "COLOR=$COLOR" >> $GITHUB_ENV
+            -   if: ${{ matrix.python-version == '3.9' }}
+                name: Create the coverage gist
+                uses: schneegans/dynamic-badges-action@v1.0.0
+                with:
+                    auth: ${{ secrets.GIST_SECRET }}
+                    gistID: f731de158a21515e2d6c52ed48d406ad
+                    filename: jointly_coverage_main.json
+                    label: Test Coverage
+                    message: ${{ env.COVERAGE }}%
+                    color: ${{ env.COLOR }}
