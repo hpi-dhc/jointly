@@ -1,6 +1,6 @@
 name: Testing, linting, and coverage
 
-on: [ push, pull_request ]
+on: [ push ]
 
 jobs:
     test-lint-coverage:
@@ -22,7 +22,8 @@ jobs:
             -   name: Lint with black
                 uses: psf/black@stable
                 with:
-                    options: "--check --verbose jointly tests"
+                    options: "--check --verbose"
+                    src: "jointly tests"
 
             -   name: Install dependencies
                 run: |
