@@ -21,7 +21,6 @@ def test_sum_numbers(generate_numbers):
     print("hello")
 
 
-
 # def test_max_number_bad(generate_numbers):
 #     """Sample test function that fails. Uncomment to see."""
 #

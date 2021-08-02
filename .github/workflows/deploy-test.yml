@@ -1,6 +1,6 @@
 name: Deploy to PyPi
 
-on: [ push, pull_request ]
+on: [ push ]
 
 jobs:
     build-n-publish-testing:
