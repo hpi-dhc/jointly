@@ -68,6 +68,7 @@ Ready to contribute? Here's how to set up `jointly` for local development.
 
     $ cd jointly/
     $ poetry install
+    $ pre-commit install
 
 4. Create a branch for local development::
 
@@ -75,22 +76,19 @@ Ready to contribute? Here's how to set up `jointly` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass the tests and linters::
 
-    $ flake8 jointly tests
-    $ python setup.py test or py.test
-    $ tox
+    $ py.test
+    $ pre-commit run --all-files
 
-   To get flake8 and tox, just pip install them into your virtualenv.
 
-6. Commit your changes and push your branch to GitHub::
+7. Commit your changes, fix any linter errors, and then push your branch to GitHub::
 
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
@@ -101,9 +99,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.6, 3.7 and 3.8, and for PyPy. Check
-   https://travis-ci.org/hpi-dhc/jointly/pull_requests
-   and make sure that the tests pass for all supported Python versions.
+3. The pull request should work for Python 3.7, 3.8 and 3.9, and for PyPi. This will be verified within the PR.
 
 Tips
 ----
@@ -116,15 +112,7 @@ Deploying
 ---------
 
 A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.rst).
-Then run::
+Make sure all your changes are committed, including an entry in HISTORY.rst and an update of the old version code
+in all places (do a full-text search!).
 
-$ bumpversion patch # possible: major / minor / patch
-$ git push
-$ git push --tags
-
-Travis will then deploy to PyPI if tests pass.
-
-Code of Conduct
----------------
-Please note that the jointly project is released with a Contributor Code of Conduct. By contributing to this project you agree to abide by its terms.
+GitHub will then deploy to PyPI if tests pass.

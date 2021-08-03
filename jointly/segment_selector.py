@@ -27,7 +27,7 @@ class SegmentSelector:
             axes[index].plot(self.signals[name].interpolate(method="time").values)
         fig.tight_layout()
 
-        bp_id = fig.canvas.mpl_connect("button_press_event", self._on_click)
+        fig.canvas.mpl_connect("button_press_event", self._on_click)
 
     def _display_segments(self):
         print("Do")

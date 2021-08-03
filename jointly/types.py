@@ -4,7 +4,7 @@ import pandas as pd
 
 SourceDict = Dict[str, Dict[str, Union[str, pd.DataFrame, float, pd.Timedelta, None]]]
 """
-A dictionary of dictionaries. 
+A dictionary of dictionaries.
 Each entry defines an input sensor, and points to a dictionary with the keys ``data`` and ``ref_column``.
 
 ``data`` is a pandas ``DataFrame`` with a ``DateTimeIndex``.
@@ -37,11 +37,11 @@ ResultTableSpec = Dict[str, Dict[str, List[str]]]
 """
 Specification for saving the synchronized results in separated files, with each root key defining a target file.
 The second level defines the columns which should be saved from each source file into the given target file.
-This can be used to separate the input files into files containing only a single sensor type, e.g., to extract the 
+This can be used to separate the input files into files containing only a single sensor type, e.g., to extract the
 PPG signal from two different sensors into a single file.
 
 
-Example: 
+Example:
 
 .. code:: python
 
@@ -69,12 +69,12 @@ Example:
         'HR': {
             'Empatica': ['hr'],
             'Everion': ['heart_rate', 'heart_rate_quality'],
-        },   
+        },
         'IBI': {
             'Faros': ['HRV'],
             'Empatica': ['ibi'],
             'Everion': ['inter_pulse_interval', 'inter_pulse_interval_deviation'],
         }
-    }   
+    }
 
 """

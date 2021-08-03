@@ -117,7 +117,9 @@ class ShakeExtractor(AbstractExtractor):
 
         return sequences_filtered
 
-    def _choose_sequence(self, signal: pd.Series, shake_list: List[List[float]]) -> Tuple[pd.Timestamp, pd.Timestamp]:
+    def _choose_sequence(
+        self, signal: pd.Series, shake_list: List[List[float]]
+    ) -> Tuple[pd.Timestamp, pd.Timestamp]:
         """
         Choose the sequence with the highest shake weight
 
@@ -126,7 +128,7 @@ class ShakeExtractor(AbstractExtractor):
         :return: start and end index values
         """
         if len(shake_list) <= 0:
-            raise ShakeMissingException(f"No shakes detected")
+            raise ShakeMissingException("No shakes detected")
 
         best_shake = max(shake_list, key=get_shake_weight)
 
@@ -161,7 +163,9 @@ class ShakeExtractor(AbstractExtractor):
 
             start_window = first_timestamp + self.start_window_length
             end_window = last_timestamp - self.end_window_length
-            peak_sequences = self.get_peak_sequences(signals, column, start_window, end_window)
+            peak_sequences = self.get_peak_sequences(
+                signals, column, start_window, end_window
+            )
 
             start_shakes, end_shakes = [], []
             for peak_sequence in peak_sequences:

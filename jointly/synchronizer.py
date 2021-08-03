@@ -240,7 +240,7 @@ class Synchronizer:
                         df[[ref_col, sig_col]][ref_start:ref_end].plot(ax=axes[index])
                 except MemoryError:
                     logger.warn(
-                        f"Couldn't allocate enough memory to plot shifted segments, skipping"
+                        "Couldn't allocate enough memory to plot shifted segments, skipping"
                     )
 
         if logger.isEnabledFor(logging.INFO):
@@ -249,7 +249,7 @@ class Synchronizer:
                     fig.tight_layout()
             except MemoryError:
                 logger.warn(
-                    f"Couldn't allocate enough memory to plot shifted segments, skipping"
+                    "Couldn't allocate enough memory to plot shifted segments, skipping"
                 )
 
         return timeshifts
