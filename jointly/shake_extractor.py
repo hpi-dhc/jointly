@@ -18,7 +18,7 @@ from .synchronization_errors import (
 pp = pprint.PrettyPrinter()
 
 
-def get_shake_weight(x):
+def get_shake_weight(x: List[float]):
     """Returns a shake weight describing the importance of a shake sequence"""
     return np.median(x) + np.mean(x)
 
@@ -117,28 +117,26 @@ class ShakeExtractor(AbstractExtractor):
 
         return sequences_filtered
 
-    def _choose_sequence(self, signal: pd.Series, shake_list: List) -> Tuple:
+    def _choose_sequence(self, signal: pd.Series, shake_list: List[List[float]]) -> Tuple[pd.Timestamp, pd.Timestamp]:
         """
+        Choose the sequence with the highest shake weight
 
-        :param signal:
-        :param shake_list:
-        :return:
+        :param signal: signal from which the shake is
+        :param shake_list: list of peak sequence value lists
+        :return: start and end index values
         """
-        if len(shake_list) > 0:
-            first = max(shake_list, key=get_shake_weight)
-            segment_start_time = first[0].index[0] - self.time_buffer
-            segment_start_index = signal.index.get_loc(
-                segment_start_time, method="nearest"
-            )
-            start = signal.index[segment_start_index]
-
-            segment_end_time = first[-1].index[0] + self.time_buffer
-            segment_end_index = signal.index.get_loc(segment_end_time, method="nearest")
-            end = signal.index[segment_end_index]
-
-            return start, end
-        else:
+        if len(shake_list) <= 0:
             raise ShakeMissingException(f"No shakes detected")
+
+        best_shake = max(shake_list, key=get_shake_weight)
+
+        segment_start_time = best_shake[0].index[0] - self.time_buffer
+        start_index = signal.index.get_loc(segment_start_time, method="nearest")
+
+        segment_end_time = best_shake[-1].index[0] + self.time_buffer
+        end_index = signal.index.get_loc(segment_end_time, method="nearest")
+
+        return signal.index[start_index], signal.index[end_index]
 
     def get_segments(self, signals: pd.DataFrame) -> SyncPairs:
         """
@@ -163,47 +161,33 @@ class ShakeExtractor(AbstractExtractor):
 
             start_window = first_timestamp + self.start_window_length
             end_window = last_timestamp - self.end_window_length
-            peaks = self.get_peak_sequences(signals, column, start_window, end_window)
+            peak_sequences = self.get_peak_sequences(signals, column, start_window, end_window)
 
-            # map peak indices to their values
-            shakes = list(
-                map(
-                    lambda sequence: (
-                        list(map(lambda index: signals[column][index], sequence))
-                    ),
-                    peaks,
-                )
-            )
+            start_shakes, end_shakes = [], []
+            for peak_sequence in peak_sequences:
+                sequence_values = [signals[column][index] for index in peak_sequence]
+                if sequence_values[0].index[0] < start_window:
+                    start_shakes.append(sequence_values)
+                elif sequence_values[-1].index[0] > end_window:
+                    end_shakes.append(sequence_values)
 
             # select sequences in start/end window
-            shakes_first = list(
-                filter(lambda sequence: sequence[0].index[0] < start_window, shakes)
+            logger.debug(
+                f"{len(start_shakes)} shakes in before {start_window} for {column}."
             )
             logger.debug(
-                "{} shakes in before {} for {}.".format(
-                    len(shakes_first), start_window, column
-                )
-            )
-            shakes_second = list(
-                filter(lambda sequence: sequence[-1].index[0] > end_window, shakes)
-            )
-            logger.debug(
-                "{} shakes in after {} for {}.".format(
-                    len(shakes_second), end_window, column
-                )
+                f"{len(end_shakes)} shakes in after {end_window} for {column}."
             )
 
             # choose sequence with highest weight
-            start, end = self._choose_sequence(signals[column], shakes_first)
+            start, end = self._choose_sequence(signals[column], start_shakes)
             self._set_first_segment(column, start, end)
 
-            start, end = self._choose_sequence(signals[column], shakes_second)
+            start, end = self._choose_sequence(signals[column], end_shakes)
             self._set_second_segment(column, start, end)
 
             logger.info(
-                "Shake segments for {}:\n{}".format(
-                    column, pp.pformat(self.segments[column])
-                )
+                f"Shake segments for {column}:\n{pp.pformat(self.segments[column])}"
             )
 
         return self.segments
