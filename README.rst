@@ -74,8 +74,8 @@ The Empatica is the reference source, and thus only the Faros' data will be chan
     synced_data = synchronizer.get_synced_data()
     synchronizer.save_pickles("./synced-files/")
 
-Credits
--------
+Template Credits
+----------------
 
 This package was created with Cookiecutter_ and the `pyOpenSci/cookiecutter-pyopensci`_ project template, based off `audreyr/cookiecutter-pypackage`_.
 

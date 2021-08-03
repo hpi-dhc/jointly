@@ -15,7 +15,8 @@ def normalize(x):
 
 
 def get_equidistant_signals(signals, frequency):
-    """Returns copy of dataframe with signals
+    """
+    Returns copy of dataframe with signals
     sampled equidistantly at the specified frequency.
     """
     freq = "{}N".format(int(1e9 / frequency))

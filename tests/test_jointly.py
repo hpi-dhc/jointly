@@ -2,22 +2,33 @@
 """Tests for `jointly` package."""
 
 import random
-
+import pandas as pd
 import pytest
 
 
 @pytest.fixture
-def generate_numbers():
-    """Sample pytest fixture. Generates list of random integers.
+def get_test_data():
+    """Get test data in the format required by jointly"""
 
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
+    def _read_csv(path: str) -> pd.DataFrame:
+        return pd.read_csv(
+            path, sep=";", index_col=0, parse_dates=True, infer_datetime_format=True
+        )
 
-    return random.sample(range(100), 10)
+    return {
+        "Faros": {
+            "data": _read_csv("../test-data/sensor1.csv.gz"),
+            "ref_column": "acc_mag",
+        },
+        "Empatica": {
+            "data": _read_csv("../test-data/sensor2.csv.gz"),
+            "ref_column": "acc_mag",
+        },
+    }
 
 
-def test_sum_numbers(generate_numbers):
-    """Sample test function for sum_numbers, using pytest fixture."""
+def test_extract_shakes(get_test_data):
+    """Verify that shake extraction works on this example"""
     print("hello")
 
 
