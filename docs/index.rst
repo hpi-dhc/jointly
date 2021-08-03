@@ -5,7 +5,7 @@
    readme
    installation
    usage
-   modules
+   reference
    contributing
    contributors
    history

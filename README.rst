@@ -50,8 +50,9 @@ Install the package from pypi:
 The data has to be provided in pandas ``DataFrame`` instances with a
 ``DateTimeIndex`` for each sensor. In the following example, ``Faros`` and ``Empatica``
 are two sensors we want to synchronize, and we have already prepared dataframes for them.
-The Empatica is the reference source, and thus only the Faros' data will be changed in the output.
-
+The Empatica is the reference source, and thus the Faros' data will be changed in the output.
+The ``ref_column`` is the column that contains the characteristic shake, and all other columns
+in the ``DataFrame`` will be synchronized together with that column.
 
 .. code:: python
 
@@ -67,11 +68,13 @@ The Empatica is the reference source, and thus only the Faros' data will be chan
             'ref_column': 'acc_mag',
         }
     }
-    reference_source_name = 'Empatica'
+    # prepare the synchronizer
+    synchronizer = jointly.Synchronizer(sources, reference_source_name='Empatica')
 
-    extractor = jointly.ShakeExtractor()
-    synchronizer = jointly.Synchronizer(sources, reference_source_name, extractor)
+    # get a dictionary of: sensor -> synced DataFrame
     synced_data = synchronizer.get_synced_data()
+
+    # save a file for each input sensor
     synchronizer.save_pickles("./synced-files/")
 
 Template Credits
