@@ -1,3 +1,5 @@
+"""Contains signal processing and plotting helpers"""
+
 import matplotlib.cm
 import numpy as np
 import pandas as pd
@@ -38,6 +40,7 @@ def get_equidistant_signals(signals, frequency):
 
 
 def plot_signals(df, cols=None, title=None, tags=None):
+    """Plots a number of signals"""
     cmap = matplotlib.cm.get_cmap("tab10")
     fig, ax = pyplot.subplots(figsize=(15, 6))
     if cols is None:
@@ -58,6 +61,7 @@ def plot_signals(df, cols=None, title=None, tags=None):
 
 
 def plot_segments(dataframe, segments, together=True, seperate=True):
+    """Plot individual segments"""
     signal_names = list(segments.keys())
     segment_names = list(segments[signal_names[0]].keys())
 

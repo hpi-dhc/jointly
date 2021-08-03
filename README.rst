@@ -1,6 +1,6 @@
-=======
-jointly
-=======
+==============
+jointly readme
+==============
 
 
 .. image:: https://img.shields.io/pypi/v/jointly.svg
