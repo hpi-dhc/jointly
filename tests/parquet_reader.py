@@ -1,22 +1,20 @@
-from typing import List
-
 import pandas as pd
 
 
-def read_parquet_sensor_data(
-    file: str = "assets/data.parquet",
-) -> pd.DataFrame:
+def read_parquet_sensor_data(file: str) -> pd.DataFrame:
+    """Read a long-format parquet file into a dataframe"""
     df = pd.read_parquet(file)
 
     timestamp = df["timestamp"].explode(ignore_index=True)
-    type = df["type"].explode(ignore_index=True)
+    type_ = df["type"].explode(ignore_index=True)
     value = df["value"].explode(ignore_index=True)
 
-    df = pd.concat([timestamp, type, value], axis="columns")
+    df = pd.concat([timestamp, type_, value], axis="columns")
     return df
 
 
 def pivot_parquet_sensor_data(data: pd.DataFrame):
+    """Pivot a long-format dataframe into groups of data points with the same sensor data type group"""
     sensor_data_type_group_map = {
         "ACCELERATION_X": "ACCELERATION",
         "ACCELERATION_Y": "ACCELERATION",
