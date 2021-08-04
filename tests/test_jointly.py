@@ -7,13 +7,13 @@ import numpy as np
 import pandas as pd
 
 import jointly
-from jointly import ShakeExtractor, SourceDict
+from jointly import ShakeExtractor
 from jointly.helpers import plot_reference_columns
-from tests.parquet_reader import get_pivoted_parquet_sensor_data
+from tests.parquet_reader import get_parquet_test_data
 
 
 def test_happy_path():
-    base_data = get_pivoted_parquet_sensor_data("../test-data/test-data.parquet")
+    base_data = get_parquet_test_data("test-data.parquet")
     reference_signal, target_signal = "A", "B"
     sources = {
         reference_signal: {"data": base_data.copy(), "ref_column": "ACCELERATION_Z"},
@@ -32,6 +32,7 @@ def test_happy_path():
         except Exception:
             traceback.print_exc()
             plot_reference_columns(sources)
+            assert False, "Should not throw exception"
 
     assert np.isnan(
         sync_result[reference_signal]["timeshift"]

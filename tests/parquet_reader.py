@@ -1,3 +1,5 @@
+import os.path
+
 import pandas as pd
 
 
@@ -13,7 +15,7 @@ def read_parquet_sensor_data(file: str) -> pd.DataFrame:
     return df
 
 
-def get_pivoted_parquet_sensor_data(file: str):
+def get_parquet_test_data(file_name: str):
     """Pivot a long-format dataframe into groups of data points with the same sensor data type group"""
     sensor_data_type_group_map = {
         "ACCELERATION_X": "ACCELERATION",
@@ -33,6 +35,13 @@ def get_pivoted_parquet_sensor_data(file: str):
         "GRAVITY_Z": "GRAVITY",
         "LIGHT": "LIGHT",
     }
+    if os.path.isfile(f"../test-data/{file_name}"):
+        file = f"../test-data/{file_name}"
+    elif os.path.isfile(f"./test-data/{file_name}"):
+        file = f"./test-data/{file_name}"
+    else:
+        raise FileNotFoundError(f"Couldn't find test file `{file_name}`")
+
     data: pd.DataFrame = read_parquet_sensor_data(file)
     data["typeGroup"] = data["type"].map(sensor_data_type_group_map.get)
     data = (
