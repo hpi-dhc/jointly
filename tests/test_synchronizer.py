@@ -7,7 +7,7 @@ import pandas as pd
 
 import jointly
 from jointly import ShakeExtractor, Synchronizer
-from jointly.helpers import plot_reference_columns
+from jointly.helpers import plot_reference_columns, stretch_signals
 from tests.parquet_reader import get_parquet_test_data
 
 
@@ -91,7 +91,7 @@ def test_happy_path_shifted_stretched_data():
     base_data = get_parquet_test_data("test-data.parquet")
     reference_signal, target_signal = "A", "B"
     target_df = base_data.shift(-22, freq="100ms")
-    target_df = Synchronizer._stretch_signals(target_df, 1.1)
+    target_df = stretch_signals(target_df, 1.1)
 
     sources = {
         reference_signal: {"data": base_data.copy(), "ref_column": "ACCELERATION_Z"},

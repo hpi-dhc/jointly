@@ -1,19 +1,15 @@
 import os
-import logging
-from pprint import pprint
-from typing import Dict, Union, Optional, List, Tuple
+from typing import Dict, Optional
 
-import scipy.signal
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot
 
-from . import ShakeExtractor, SyncPairs
-from .log import logger
-from .helpers import normalize, get_equidistant_signals
+from . import ShakeExtractor, helpers
 from .abstract_extractor import AbstractExtractor
-from .synchronization_errors import ShakeMissingException, StartEqualsEndError
-from .types import SourceDict, SyncPairTimeshift, ResultTableSpec
+from .helpers import normalize, get_equidistant_signals
+from .log import logger
+from .synchronization_errors import StartEqualsEndError
+from .types import SourceDict, ResultTableSpec
 
 
 class Synchronizer:
@@ -51,23 +47,45 @@ class Synchronizer:
         """
         self.sources = sources
         self.ref_source_name = reference_source_name
+        self._check_sources()
+
         self.extractor = extractor if extractor is not None else ShakeExtractor()
         self.ref_signals = self._prepare_ref_signals()
         self.tags = tags
 
         self.sampling_freq = (
-            sampling_freq if sampling_freq is not None else self.get_max_ref_frequency()
+            sampling_freq
+            if sampling_freq is not None
+            else helpers.get_max_ref_frequency(self.ref_signals)
         )
 
-    def truncate_data(self, buffer=300):
-        if self.tags is None:
-            return
-        before = self.tags.data.index.min() - pd.Timedelta(seconds=buffer)
-        after = self.tags.data.index.max() + pd.Timedelta(seconds=buffer)
-
-        self.ref_signals = self.ref_signals.truncate(before=before, after=after)
-        for source in self.sources.values():
-            source["data"] = source["data"].truncate(before=before, after=after)
+    def _check_sources(self):
+        """Verifies that the source dict adheres to the required format and that the reference source is available"""
+        for source_name, source in self.sources.items():
+            if "data" not in source or "ref_column" not in source:
+                raise ValueError(
+                    "Each source needs to have a `data` and a `ref_column` property"
+                )
+            if not isinstance(source["data"], pd.DataFrame):
+                raise ValueError(
+                    "The `data` property of each source must contain a DatFrame"
+                )
+            if not isinstance(source["data"].index, pd.DatetimeIndex):
+                raise ValueError(
+                    "The `data` DataFrame must have a pd.DatetimeIndex for each source"
+                )
+            if (
+                not isinstance(source["ref_column"], str)
+                or source["ref_column"] not in source["data"].columns
+            ):
+                raise ValueError(
+                    "Each source must have a string specifying the reference column, and the reference"
+                    "column must be available in the source's DataFrame"
+                )
+        if self.ref_source_name not in self.sources.keys():
+            raise ValueError(
+                "The reference source name must be available in the source dict"
+            )
 
     def _prepare_ref_signals(self) -> pd.DataFrame:
         """
@@ -85,174 +103,6 @@ class Synchronizer:
             )
         reference_signals = reference_signals.apply(normalize)
         return reference_signals
-
-    def get_max_ref_frequency(self) -> float:
-        """
-        Get the maximum frequency in the reference signals
-
-        :return: float describing the maximum frequency in the source data.
-        """
-        if self.ref_signals is None:
-            raise ValueError(
-                "Unable to get maximum frequency: Reference signals undefined."
-            )
-        frequencies = self.ref_signals.aggregate(Synchronizer._infer_freq)
-        return np.amax(frequencies)
-
-    @staticmethod
-    def _infer_freq(series: pd.Series) -> float:
-        """
-        Infer the frequency of a series by finding the median temporal distance between its elements.
-
-        :param series: the frequency of this series will be inferred
-        :return: frequency, as a float, measured in Hz
-        """
-        index = series.dropna().index
-        timedeltas = index[1:] - index[:-1]
-        median = np.median(timedeltas)
-        return np.timedelta64(1, "s") / median
-
-    @staticmethod
-    def _stretch_signals(
-        source: pd.DataFrame, factor: float, start_time=None
-    ) -> pd.DataFrame:
-        """
-        Returns a copy of DataFrame with stretched DateTimeIndex.
-
-        :param source: the index of this DataFrame will be stretched.
-        :param factor: the factor by which to streth the DateTimeIndex
-        :param start_time: first index, i.e., time, in the dataframe. Will be calculated if not given.
-        :return: copy of the dataframe with stretched index
-        """
-        df = source.copy()
-        if start_time is None:
-            start_time = df.index.min()
-        logger.debug("Use start time: {}".format(start_time))
-        timedelta = df.index - start_time
-        new_index = timedelta * factor + start_time
-        df.set_index(new_index, inplace=True, verify_integrity=True)
-        return df
-
-    @staticmethod
-    def _get_stretch_factor(segments, timeshifts):
-        """
-        Get the stretch factor required to stretch the duration between segments such that it will fit exactly to the
-        signal when shifted by the amount given by timeshifts.
-
-        :param segments: the segment instance containing the segment info to be stretched
-        :param timeshifts: the timeshifts that should be applied to make the signal align to the reference signal
-        :return: a float as described above
-        """
-        old_length = segments["second"]["start"] - segments["first"]["start"]
-        new_length = old_length + timeshifts["second"] - timeshifts["first"]
-        stretch_factor = new_length / old_length
-        return stretch_factor
-
-    @staticmethod
-    def _verify_segments(
-        columns: Tuple[str, str], segments: SyncPairs, segment_names: List[str]
-    ):
-        """Verify that two synchronization points (i.e., start and end) have been found for each signal."""
-        for col in columns:
-            for segment in segment_names:
-                for part in ["start", "end"]:
-                    try:
-                        segments[col][segment][part]
-                    except KeyError:
-                        print("Dumping all detected segments:")
-                        pprint(segments)
-                        raise ShakeMissingException(
-                            f"No {segment} shake detected for {col}, missing the {part}"
-                        )
-
-    @staticmethod
-    def _get_segment_data(
-        dataframe: pd.DataFrame, segments: SyncPairs, col: str, segment: str
-    ) -> Tuple[pd.Timestamp, pd.Timestamp, pd.DataFrame]:
-        start = segments[col][segment]["start"]
-        end = segments[col][segment]["end"]
-        return start, end, dataframe[col][start:end]
-
-    @staticmethod
-    def _get_timeshift_pair(
-        dataframe: pd.DataFrame, ref_col: str, sig_col: str, segments: SyncPairs
-    ) -> SyncPairTimeshift:
-        """
-        Returns timeshifts to synchronize sig_col to ref_col.
-        Expects equidistant sampled signals.
-
-        :param dataframe: reference signal dataframe
-        :param ref_col: name of the reference signal in segments
-        :param sig_col: name of the target signal in segments
-        :param segments: all detected synchronization pairs
-        :return: timeshift to align the first and second synchronization point
-                 for the target signal to the reference signal
-        """
-        timeshifts = {}
-        segment_names = ["first", "second"]
-
-        Synchronizer._verify_segments((ref_col, sig_col), segments, segment_names)
-
-        fig, axes = None, None
-        if logger.isEnabledFor(logging.INFO):
-            fig, axes = pyplot.subplots(1, 2, figsize=(15, 4))
-
-        for index, segment in enumerate(segment_names):
-            logger.debug(
-                f"Calculate timeshift of {segment} segment "
-                f"for {sig_col} to {ref_col}."
-            )
-
-            # reference signal segment data extraction
-            ref_start, ref_end, ref_data = Synchronizer._get_segment_data(
-                dataframe, segments, ref_col, segment
-            )
-            sig_start, sig_end, sig_data = Synchronizer._get_segment_data(
-                dataframe, segments, sig_col, segment
-            )
-
-            # calculate cross-correlation of segments
-            cross_corr = scipy.signal.correlate(ref_data, sig_data)
-            shift_in_samples = np.argmax(cross_corr) - len(sig_data) + 1
-
-            # get timestamp at which sig_segment must start to sync signals
-            max_corr_ts = dataframe.index[
-                dataframe.index.get_loc(ref_start, method="nearest") + shift_in_samples
-            ]
-            logger.debug(
-                f"Highest correlation with start at "
-                f"{max_corr_ts} with {np.max(cross_corr)}."
-            )
-
-            # calculate timeshift to move signal to maximize correlation
-            timeshifts[segment] = max_corr_ts - sig_start
-            logger.debug("Timeshift is {}.".format(str(timeshifts[segment])))
-
-            # plot shifted segments
-            if logger.isEnabledFor(logging.INFO):
-                try:
-                    df = dataframe.copy()
-                    df[sig_col] = df[sig_col].shift(1, freq=timeshifts[segment])
-                    if axes is not None:
-                        axes[index].set_title(
-                            f"{segment} segment of {ref_col} and {sig_col}"
-                        )
-                        df[[ref_col, sig_col]][ref_start:ref_end].plot(ax=axes[index])
-                except MemoryError:
-                    logger.warn(
-                        "Couldn't allocate enough memory to plot shifted segments, skipping"
-                    )
-
-        if logger.isEnabledFor(logging.INFO):
-            try:
-                if fig is not None:
-                    fig.tight_layout()
-            except MemoryError:
-                logger.warn(
-                    "Couldn't allocate enough memory to plot shifted segments, skipping"
-                )
-
-        return timeshifts
 
     def _calculate_stretch_factors(self) -> pd.DataFrame:
         """
@@ -273,7 +123,7 @@ class Synchronizer:
             if source == self.ref_source_name:
                 continue
 
-            timeshifts = Synchronizer._get_timeshift_pair(
+            timeshifts = helpers.get_timeshift_pair(
                 df_equidistant, self.ref_source_name, source, sync_pairs
             )
             logger.debug(
@@ -281,7 +131,7 @@ class Synchronizer:
                 f"{timeshifts['first'] - timeshifts['second']}"
             )
             try:
-                stretch_factor = Synchronizer._get_stretch_factor(
+                stretch_factor = helpers.get_stretch_factor(
                     sync_pairs[source], timeshifts
                 )
             except ZeroDivisionError:
@@ -291,7 +141,7 @@ class Synchronizer:
             logger.info(f"Stretch factor for {source}: {stretch_factor}")
 
             # stretch signal and exchange it in dataframe
-            signal_stretched = Synchronizer._stretch_signals(
+            signal_stretched = helpers.stretch_signals(
                 pd.DataFrame(ref_signals[source]).dropna(),
                 stretch_factor,
                 start_time,
@@ -320,7 +170,7 @@ class Synchronizer:
             if source == self.ref_source_name:
                 continue
 
-            timeshifts = Synchronizer._get_timeshift_pair(
+            timeshifts = helpers.get_timeshift_pair(
                 df_equi, self.ref_source_name, source, segments
             )
             timedelta = timeshifts["first"] - timeshifts["second"]
@@ -380,7 +230,7 @@ class Synchronizer:
             stretch_factor, timeshift = source["stretch_factor"], source["timeshift"]
 
             if stretch_factor != 1:
-                data = Synchronizer._stretch_signals(data, stretch_factor, start_time)
+                data = helpers.stretch_signals(data, stretch_factor, start_time)
             if timeshift is not None:
                 data = data.shift(1, freq=timeshift)
             synced_data[source_name] = data
