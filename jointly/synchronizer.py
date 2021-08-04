@@ -391,7 +391,7 @@ class Synchronizer:
         Sync parameters are saved as ``SYNC.csv``.
 
         :param target_dir: target directory for the export files
-        :return: the synced data. Sync parameter dataframe is in a dictionary entry with the key "SYNC".
+        :return: the synced data, plus a sync parameter dataframe in the dictionary entry with the key "SYNC".
         """
         sync_params = pd.DataFrame(self.get_sync_params())
         synced_data = self.get_synced_data()
