@@ -80,10 +80,8 @@ class Synchronizer:
         for source_name, source in self.sources.items():
             signal = source["data"][source["ref_column"]].dropna()
             reference_signals = reference_signals.join(signal, how="outer")
-            # todo: replace this with reference_signals.rename(columns={source["ref_column"]: source_name}, inplace=True)
             reference_signals.rename(
-                columns=(lambda x: source_name if x == source["ref_column"] else x),
-                inplace=True,
+                columns={source["ref_column"]: source_name}, inplace=True
             )
         reference_signals = reference_signals.apply(normalize)
         return reference_signals

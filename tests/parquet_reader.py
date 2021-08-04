@@ -13,7 +13,7 @@ def read_parquet_sensor_data(file: str) -> pd.DataFrame:
     return df
 
 
-def pivot_parquet_sensor_data(data: pd.DataFrame):
+def get_pivoted_parquet_sensor_data(file: str):
     """Pivot a long-format dataframe into groups of data points with the same sensor data type group"""
     sensor_data_type_group_map = {
         "ACCELERATION_X": "ACCELERATION",
@@ -33,6 +33,7 @@ def pivot_parquet_sensor_data(data: pd.DataFrame):
         "GRAVITY_Z": "GRAVITY",
         "LIGHT": "LIGHT",
     }
+    data: pd.DataFrame = read_parquet_sensor_data(file)
     data["typeGroup"] = data["type"].map(sensor_data_type_group_map.get)
     data = (
         data.reset_index(drop=True)

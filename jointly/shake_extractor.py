@@ -24,11 +24,38 @@ def get_shake_weight(x: List[float]):
 
 
 class ShakeExtractor(AbstractExtractor):
-    start_window_length = pd.Timedelta(seconds=600)
-    """time window in seconds in which to look for peaks from start of signal"""
+    def __init__(self):
+        super().__init__()
+        self.start_window_length = pd.Timedelta(seconds=600)
+        self.end_window_length = pd.Timedelta(seconds=600)
 
-    end_window_length = pd.Timedelta(seconds=600)
-    """time window in seconds in which to look for peaks at end of signal"""
+    @property
+    def start_window_length(self) -> pd.Timedelta:
+        """time window as pandas.Timedelta in which to look for peaks from start of signal"""
+        return self._start_window_length
+
+    @start_window_length.setter
+    def start_window_length(self, value: pd.Timedelta):
+        if isinstance(value, pd.Timedelta):
+            self._start_window_length = value
+        else:
+            raise ValueError(
+                "window lengths are given as e.g. pd.Timedelta(seconds=600)"
+            )
+
+    @property
+    def end_window_length(self) -> pd.Timedelta:
+        """time window as pandas.Timedelta in which to look for peaks at end of signal"""
+        return self._end_window_length
+
+    @end_window_length.setter
+    def end_window_length(self, value: pd.Timedelta):
+        if isinstance(value, pd.Timedelta):
+            self._end_window_length = value
+        else:
+            raise ValueError(
+                "window lengths are given as e.g. pd.Timedelta(seconds=600)"
+            )
 
     threshold = 0.3
     """min height for peak detection. In range [0, 1], as the data is normalized."""
@@ -43,8 +70,8 @@ class ShakeExtractor(AbstractExtractor):
     """time in seconds will be padded to first and last peak for timestamps of segment"""
 
     def _merge_peak_sequences(
-        self, peaks: List[int], signals: pd.DataFrame
-    ) -> List[List[int]]:
+        self, peaks: List[pd.DatetimeIndex], signals: pd.DataFrame
+    ) -> List[List[pd.DatetimeIndex]]:
         """
         Merge the given peaks into peak sequences with inter-peak distances of less than ``self.distance``.
 
@@ -76,7 +103,7 @@ class ShakeExtractor(AbstractExtractor):
         column: str,
         start_window: pd.Timestamp,
         end_window: pd.Timestamp,
-    ):
+    ) -> List[List[pd.DatetimeIndex]]:
         """
         Returns index list of peak sequences from a normalized signal.
         Peaks that have no adjacent peaks within ``distance`` ms are ignored.
@@ -127,9 +154,6 @@ class ShakeExtractor(AbstractExtractor):
         :param shake_list: list of peak sequence value lists
         :return: start and end index values
         """
-        if len(shake_list) <= 0:
-            raise ShakeMissingException("No shakes detected")
-
         best_shake = max(shake_list, key=get_shake_weight)
 
         segment_start_time = best_shake[0].index[0] - self.time_buffer
@@ -139,6 +163,17 @@ class ShakeExtractor(AbstractExtractor):
         end_index = signal.index.get_loc(segment_end_time, method="nearest")
 
         return signal.index[start_index], signal.index[end_index]
+
+    @staticmethod
+    def _check_shakes_not_empty(shakes: List[List[int]], label: str):
+        """Raise an exception if the given list of shakes is empty"""
+        if len(shakes) <= 0:
+            raise ShakeMissingException(
+                f"No {label} shakes detected - "
+                "check window lengths, "
+                "detection threshold, "
+                "minimum sequence length"
+            )
 
     def get_segments(self, signals: pd.DataFrame) -> SyncPairs:
         """
@@ -157,7 +192,8 @@ class ShakeExtractor(AbstractExtractor):
             duration = last_timestamp - first_timestamp
             if duration < self.start_window_length or duration < self.end_window_length:
                 raise BadWindowException(
-                    f"The window is longer than signal {column}. "
+                    f"Start ({self.start_window_length}) or end ({self.end_window_length}) "
+                    f"window lengths greater than length of signal {column} ({duration}). "
                     f"Make it so each window only covers start or end, not both."
                 )
 
@@ -167,21 +203,25 @@ class ShakeExtractor(AbstractExtractor):
                 signals, column, start_window, end_window
             )
 
-            start_shakes, end_shakes = [], []
+            start_shakes, end_shakes, other_shakes = [], [], []
             for peak_sequence in peak_sequences:
                 sequence_values = [signals[column][index] for index in peak_sequence]
                 if sequence_values[0].index[0] < start_window:
                     start_shakes.append(sequence_values)
                 elif sequence_values[-1].index[0] > end_window:
                     end_shakes.append(sequence_values)
+                else:
+                    other_shakes.append(sequence_values)
 
             # select sequences in start/end window
             logger.debug(
-                f"{len(start_shakes)} shakes in before {start_window} for {column}."
+                f"{len(start_shakes)} shakes in start window ({start_window}), "
+                f"{len(end_shakes)} shakes in end window ({end_window}), "
+                f"{len(other_shakes)} shakes in between, for {column}."
             )
-            logger.debug(
-                f"{len(end_shakes)} shakes in after {end_window} for {column}."
-            )
+
+            ShakeExtractor._check_shakes_not_empty(start_shakes, "start")
+            ShakeExtractor._check_shakes_not_empty(end_shakes, "end")
 
             # choose sequence with highest weight
             start, end = self._choose_sequence(signals[column], start_shakes)
