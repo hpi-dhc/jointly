@@ -5,6 +5,7 @@
    readme
    installation
    usage
+   background
    reference
    contributing
    contributors

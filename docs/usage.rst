@@ -1,65 +1,16 @@
-=====
+==========
 Usage
-=====
+==========
 
-To use jointly in a project::
-
-    import jointly
-
-
-Jointly: Signal Synchronizer
-============================
-
-The Syncing Process
--------------------
-
-To sync two sources with each other, they need a simultaneously recorded
-signal with a characteristic signature at two timepoints in common. This
-could be the magnitude of the accelerometer for example, if multiple
-devices are shaken together.
-
-Selecting common segments
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The script can detect prominent shakes automatically with the
-``ShakeExtractor``. This is done by detecting the peaks above a certain
-``threshold``. They are then merged to sequences, if two peaks are not
-farther apart than a specified ``distance`` in milliseconds. Sequences
-with less than ``min_length`` peaks are filtered out. Sequences, that do
-not start or end in a ``window`` of seconds from start and end of the
-signal respectivley, are filtered in a second step. From these filtered
-sequences the sequence with the highest weight (mean + median of
-sequence) is selected for the corresponding segment.
-
-Calculation of the timeshift
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To compensate the differences in the system time of different sources,
-the timeshift to synchronize the selected segments with each other is
-calculated. For the automatic computation of the timeshift between two
-signals the cross-correlation for each segment with the reference signal
-is calculated. The signals are shifted so that the correlation between
-the selected segments is maximized.
-
-Adjusting the frequency
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Due to clock drift, which denotes the issue that a clock is not running
-at the exact same frequency as a specified reference clock, signals that
-can be in sync at one timepoint desynchronize gradually over time. To
-compensate this effect a stretching factor is calculated, which brings
-the difference between the timeshifts for the synchronization based on
-the first and second segment respectively to zero. After stretching the
-signal, the timeshift to align the signals has to be calculated again.
-
-Example
--------
 
 Syncing data
-~~~~~~~~~~~~
+------------
 
 The data has to be provided in pandas ``DataFrame`` with a
-``DateTimeIndex``.
+``DateTimeIndex``. Each signal source, i.e., each sensor,
+is given in a dictionary together with the name of the column
+containing the events that should be synchronized, e.g., the
+shake common to all sensor signals in the acceleration magnitude.
 
 .. code:: python
 
@@ -85,16 +36,73 @@ The data has to be provided in pandas ``DataFrame`` with a
     synchronizer = jointly.Synchronizer(sources, ref_source_name, extractor)
     synced_data = synchronizer.get_synced_data()
 
-Saving data
-~~~~~~~~~~~
+Tuning Shake Detection
+----------------------
 
-To define the tables, which should be saved, create a dictionary. Every
-key at root level defines the name of the corresponding file. The
-dictionary at the second level defines a list of columns, which should
-be saved in this file, for each source. The ``save_data()`` method will
-also automatically save all data from all sources in a file named
-``TOTAL.csv``. This can be deactivated by adding the argument
-``save_total_table = False``.
+To optimize results of the shake detection, the following
+parameters typically need to be adjusted:
+
+.. code:: python
+
+    extractor = jointly.ShakeExtractor()
+
+    # this should contain only the start shakes in all data streams
+    extractor.start_window_length = pd.Timedelta(seconds=N)
+
+    # this should contain only the end shakes in all data streams
+    extractor.end_window_length = pd.Timedelta(seconds=3)
+
+    # the number of shakes that were done, e.g., 3
+    extractor.min_length = 3
+
+    # the minimum height of the shakes, in a normalized range
+    extractor.threshold = 0.5
+
+Debugging
+~~~~~~~~~
+
+To find issues with the shake detection, it often helps to plot the data.
+``plot_reference_columns`` is available to plot the reference columns from
+a source table.
+
+.. code:: python
+
+    try:
+        jointly.Synchronizer(sources, reference_signal)
+        sync_result = synchronizer.save_pickles(tmp_dir)
+    except Exception:
+        traceback.print_exc()
+        plot_reference_columns(sources)
+
+
+Saving data
+-----------
+
+There are two approaches to saving the data. ``save_data()`` can be used
+to create an export file for each data category, while ``save_pickles``
+dumps the synchronized dataframes for each individual sensor into a ``.pickle``
+each.
+
+``save_pickles()``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+To save an individual DataFrame for each input source, call ``synchronizer.save_pickles()``
+
+
+.. code:: python
+
+    synchronizer.save_pickles(sync_dir_path)
+
+
+``save_data()``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+To use ``save_data()`` create a dictionary as follows: every
+key at the root level defines the name of a corresponding file.
+In each entry, select the source columns by creating a key (for
+example, add ``Faros`` to select data from the ``Faros`` source)
+that points to the columns to be extracted from that source, e.g.,
+``['Accelerometer_X', 'Accelerometer_Y', 'Accelerometer_Z']``.
 
 .. code:: python
 
@@ -130,7 +138,7 @@ also automatically save all data from all sources in a file named
         }
     }
 
-    synchronizer.save_data(sync_dir_path, tables=tables)
+    synchronizer.save_data(sync_dir_path, tables=tables, save_total_table=False)
 
 Logging
 -------

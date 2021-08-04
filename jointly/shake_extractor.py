@@ -18,7 +18,7 @@ from .synchronization_errors import (
 pp = pprint.PrettyPrinter()
 
 
-def get_shake_weight(x: List[float]):
+def get_shake_weight(x: List[pd.DatetimeIndex]):
     """Returns a shake weight describing the importance of a shake sequence"""
     return np.median(x) + np.mean(x)
 
@@ -145,7 +145,7 @@ class ShakeExtractor(AbstractExtractor):
         return sequences_filtered
 
     def _choose_sequence(
-        self, signal: pd.Series, shake_list: List[List[float]]
+        self, signal: pd.Series, shake_list: List[List[pd.DatetimeIndex]]
     ) -> Tuple[pd.Timestamp, pd.Timestamp]:
         """
         Choose the sequence with the highest shake weight

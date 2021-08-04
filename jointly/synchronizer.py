@@ -113,7 +113,9 @@ class Synchronizer:
         return np.timedelta64(1, "s") / median
 
     @staticmethod
-    def _stretch_signals(source: pd.DataFrame, factor: float, start_time=None):
+    def _stretch_signals(
+        source: pd.DataFrame, factor: float, start_time=None
+    ) -> pd.DataFrame:
         """
         Returns a copy of DataFrame with stretched DateTimeIndex.
 

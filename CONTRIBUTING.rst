@@ -76,13 +76,14 @@ Ready to contribute? Here's how to set up `jointly` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass the tests and linters::
+5. When you're done making changes, check that your changes pass the tests and linters and that the docs can be built::
 
     $ py.test
     $ pre-commit run --all-files
+    $ cd docs && make html
 
 
-7. Commit your changes, fix any linter errors, and then push your branch to GitHub::
+7. Commit your changes and then push your branch to GitHub::
 
     $ git add .
     $ git commit -m "Your detailed description of your changes."
