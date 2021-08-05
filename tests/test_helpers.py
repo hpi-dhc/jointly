@@ -4,7 +4,12 @@ import pandas as pd
 import pytest
 
 from jointly import ShakeMissingException
-from jointly.helpers import calculate_magnitude, normalize, verify_segments
+from jointly.helpers import (
+    calculate_magnitude,
+    normalize,
+    verify_segments,
+    get_segment_data,
+)
 
 
 def test_calculate_magnitude():
@@ -95,4 +100,16 @@ def test_verify_segments():
 
 
 def test_get_segment_data():
-    assert False
+    segments = {
+        "s": {"first": {"start": 0, "end": 2}},
+    }
+    df = pd.DataFrame({"s": [1, 2, 3, 4]})
+    result_expected = 0, 2, pd.Series([1, 2], name="s")
+    result_actual = get_segment_data(df, segments, "s", "first")
+
+    assert len(result_actual) == 3, "should have start, end, data"
+    assert result_expected[0] == result_actual[0], "should find right start"
+    assert result_expected[1] == result_actual[1], "should find right end"
+    assert (
+        result_expected[2] == result_actual[2]
+    ).all(), "should extract correct portion"
