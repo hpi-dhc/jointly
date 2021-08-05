@@ -2,7 +2,17 @@
 History
 =======
 
-0.2.0 (2021-08-02)
+
+0.3.1 (2021-08-04)
+------------------
+
+* Further improve CI/CD
+* add documentation
+* add badges
+* add tests
+* add more input validation
+
+0.2.0 (2021-05-06)
 ------------------
 
 * Improve CI/CD

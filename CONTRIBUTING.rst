@@ -114,6 +114,6 @@ Deploying
 
 A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed, including an entry in HISTORY.rst and an update of the old version code
-in all places (do a full-text search!).
+in ``docs/conf.py`` and ``pyproject.toml``.
 
 GitHub will then deploy to PyPI if tests pass.
