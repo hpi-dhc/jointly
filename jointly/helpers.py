@@ -1,16 +1,15 @@
 """Contains signal processing and plotting helpers"""
 import logging
 from pprint import pprint
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Iterable
 
 import matplotlib.cm
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot, pyplot as plt
-from scipy.signal import correlate
 
 from jointly import ShakeMissingException
-from jointly.types import SyncPairs, SourceDict, SyncPairTimeshift
+from jointly.types import SyncPairs, SourceDict
 
 logger = logging.getLogger("jointly.helpers")
 
@@ -27,9 +26,14 @@ def calculate_magnitude(
 
 def normalize(x: List[float]):
     """Normalizes signal to interval [-1, 1] with mean 0."""
-    xn = x - np.mean(x)
-    xn = xn / np.max(np.abs(xn))
-    return xn
+    if len(x) <= 1:
+        raise ValueError("Cannot normalize list with less than 2 entries")
+    x_centered = x - np.mean(x)
+    x_maximum = np.max(np.abs(x_centered))
+    if x_maximum == 0:
+        raise ZeroDivisionError("input vector is all-zero")
+    x_normalized = x_centered / x_maximum
+    return x_normalized
 
 
 def get_equidistant_signals(signals: pd.DataFrame, frequency: float):
@@ -112,20 +116,18 @@ def get_stretch_factor(segments, timeshifts):
     return stretch_factor
 
 
-def verify_segments(
-    columns: Tuple[str, str], segments: SyncPairs, segment_names: List[str]
-):
+def verify_segments(signals: Iterable[str], segments: SyncPairs):
     """Verify that two synchronization points (i.e., start and end) have been found for each signal."""
-    for col in columns:
-        for segment in segment_names:
+    for signal in signals:
+        for segment in ["first", "second"]:
             for part in ["start", "end"]:
                 try:
-                    segments[col][segment][part]
+                    segments[signal][segment][part]
                 except KeyError:
                     print("Dumping all detected segments:")
                     pprint(segments)
                     raise ShakeMissingException(
-                        f"No {segment} shake detected for {col}, missing the {part}"
+                        f"No {segment} shake detected for {signal}, missing the {part}"
                     )
 
 
@@ -135,86 +137,6 @@ def get_segment_data(
     start = segments[col][segment]["start"]
     end = segments[col][segment]["end"]
     return start, end, dataframe[col][start:end]
-
-
-def get_timeshift_pair(
-    dataframe: pd.DataFrame, ref_col: str, sig_col: str, segments: SyncPairs
-) -> SyncPairTimeshift:
-    """
-    Returns timeshifts to synchronize sig_col to ref_col.
-    Expects equidistant sampled signals.
-
-    :param dataframe: reference signal dataframe
-    :param ref_col: name of the reference signal in segments
-    :param sig_col: name of the target signal in segments
-    :param segments: all detected synchronization pairs
-    :return: timeshift to align the first and second synchronization point
-             for the target signal to the reference signal
-    """
-    timeshifts = {}
-    segment_names = ["first", "second"]
-
-    verify_segments((ref_col, sig_col), segments, segment_names)
-
-    fig, axes = None, None
-    if logger.isEnabledFor(logging.INFO):
-        fig, axes = pyplot.subplots(1, 2, figsize=(15, 4))
-
-    for index, segment in enumerate(segment_names):
-        logger.debug(
-            f"Calculate timeshift of {segment} segment " f"for {sig_col} to {ref_col}."
-        )
-
-        # reference signal segment data extraction
-        ref_start, ref_end, ref_data = get_segment_data(
-            dataframe, segments, ref_col, segment
-        )
-        sig_start, sig_end, sig_data = get_segment_data(
-            dataframe, segments, sig_col, segment
-        )
-
-        # calculate cross-correlation of segments
-        cross_corr = correlate(ref_data, sig_data)
-        shift_in_samples = np.argmax(cross_corr) - len(sig_data) + 1
-
-        # get timestamp at which sig_segment must start to sync signals
-        max_corr_ts = dataframe.index[
-            dataframe.index.get_loc(ref_start, method="nearest") + shift_in_samples
-        ]
-        logger.debug(
-            f"Highest correlation with start at "
-            f"{max_corr_ts} with {np.max(cross_corr)}."
-        )
-
-        # calculate timeshift to move signal to maximize correlation
-        timeshifts[segment] = max_corr_ts - sig_start
-        logger.debug("Timeshift is {}.".format(str(timeshifts[segment])))
-
-        # plot shifted segments
-        if logger.isEnabledFor(logging.INFO):
-            try:
-                df = dataframe.copy()
-                df[sig_col] = df[sig_col].shift(1, freq=timeshifts[segment])
-                if axes is not None:
-                    axes[index].set_title(
-                        f"{segment} segment of {ref_col} and {sig_col}"
-                    )
-                    df[[ref_col, sig_col]][ref_start:ref_end].plot(ax=axes[index])
-            except MemoryError:
-                logger.warn(
-                    "Couldn't allocate enough memory to plot shifted segments, skipping"
-                )
-
-    if logger.isEnabledFor(logging.INFO):
-        try:
-            if fig is not None:
-                fig.tight_layout()
-        except MemoryError:
-            logger.warn(
-                "Couldn't allocate enough memory to plot shifted segments, skipping"
-            )
-
-    return timeshifts
 
 
 def plot_signals(

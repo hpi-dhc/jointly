@@ -1,15 +1,18 @@
+import logging
 import os
 from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot
+from scipy.signal import correlate
 
 from . import ShakeExtractor, helpers
 from .abstract_extractor import AbstractExtractor
 from .helpers import normalize, get_equidistant_signals
 from .log import logger
 from .synchronization_errors import StartEqualsEndError
-from .types import SourceDict, ResultTableSpec
+from .types import SourceDict, ResultTableSpec, SyncPairTimeshift, SyncPairs
 
 
 class Synchronizer:
@@ -109,6 +112,83 @@ class Synchronizer:
         reference_signals = reference_signals.apply(normalize)
         return reference_signals
 
+    @staticmethod
+    def _get_timeshift_pair(
+        dataframe: pd.DataFrame, ref_col: str, sig_col: str, segments: SyncPairs
+    ) -> SyncPairTimeshift:
+        """
+        Returns timeshifts to synchronize sig_col to ref_col.
+        Expects equidistant sampled signals.
+
+        :param dataframe: reference signal dataframe
+        :param ref_col: name of the reference signal in segments
+        :param sig_col: name of the target signal in segments
+        :param segments: all detected synchronization pairs
+        :return: timeshift to align the first and second synchronization point
+                 for the target signal to the reference signal
+        """
+        fig, axes = None, None
+        if logger.isEnabledFor(logging.INFO):
+            fig, axes = pyplot.subplots(1, 2, figsize=(15, 4))
+
+        timeshifts = {}
+        for index, segment in enumerate(["first", "second"]):
+            logger.debug(
+                f"Calculate timeshift of {segment} segment "
+                f"for {sig_col} to {ref_col}."
+            )
+
+            # reference signal segment data extraction
+            ref_start, ref_end, ref_data = helpers.get_segment_data(
+                dataframe, segments, ref_col, segment
+            )
+            sig_start, sig_end, sig_data = helpers.get_segment_data(
+                dataframe, segments, sig_col, segment
+            )
+
+            # calculate cross-correlation of segments
+            cross_corr = correlate(ref_data, sig_data)
+            shift_in_samples = np.argmax(cross_corr) - len(sig_data) + 1
+
+            # get timestamp at which sig_segment must start to sync signals
+            max_corr_ts = dataframe.index[
+                dataframe.index.get_loc(ref_start, method="nearest") + shift_in_samples
+            ]
+            logger.debug(
+                f"Highest correlation with start at "
+                f"{max_corr_ts} with {np.max(cross_corr)}."
+            )
+
+            # calculate timeshift to move signal to maximize correlation
+            timeshifts[segment] = max_corr_ts - sig_start
+            logger.debug("Timeshift is {}.".format(str(timeshifts[segment])))
+
+            # plot shifted segments
+            if logger.isEnabledFor(logging.INFO):
+                try:
+                    df = dataframe.copy()
+                    df[sig_col] = df[sig_col].shift(1, freq=timeshifts[segment])
+                    if axes is not None:
+                        axes[index].set_title(
+                            f"{segment} segment of {ref_col} and {sig_col}"
+                        )
+                        df[[ref_col, sig_col]][ref_start:ref_end].plot(ax=axes[index])
+                except MemoryError:
+                    logger.warn(
+                        "Couldn't allocate enough memory to plot shifted segments, skipping"
+                    )
+
+        if logger.isEnabledFor(logging.INFO):
+            try:
+                if fig is not None:
+                    fig.tight_layout()
+            except MemoryError:
+                logger.warn(
+                    "Couldn't allocate enough memory to plot shifted segments, skipping"
+                )
+
+        return timeshifts
+
     def _calculate_stretch_factors(self) -> pd.DataFrame:
         """
         Calculate the stretch factor that aligns each reference signal to the reference
@@ -123,12 +203,13 @@ class Synchronizer:
         # Get equidistantly sampled reference signals for the cross correlation to work
         df_equidistant = get_equidistant_signals(ref_signals, self.sampling_freq)
         sync_pairs = self.extractor.get_segments(df_equidistant)
+        helpers.verify_segments(ref_signals.columns, sync_pairs)
 
         for source in df_equidistant.columns:
             if source == self.ref_source_name:
                 continue
 
-            timeshifts = helpers.get_timeshift_pair(
+            timeshifts = Synchronizer._get_timeshift_pair(
                 df_equidistant, self.ref_source_name, source, sync_pairs
             )
             logger.debug(
@@ -170,12 +251,13 @@ class Synchronizer:
         # Resample again with stretched signal
         df_equi = get_equidistant_signals(stretched_ref_signals, self.sampling_freq)
         segments = self.extractor.get_segments(df_equi)
+        helpers.verify_segments(stretched_ref_signals.columns, segments)
 
         for source in df_equi.columns:
             if source == self.ref_source_name:
                 continue
 
-            timeshifts = helpers.get_timeshift_pair(
+            timeshifts = Synchronizer._get_timeshift_pair(
                 df_equi, self.ref_source_name, source, segments
             )
             timedelta = timeshifts["first"] - timeshifts["second"]
