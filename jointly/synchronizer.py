@@ -1,10 +1,8 @@
-import logging
 import os
 from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot
 from scipy.signal import correlate
 
 from . import ShakeExtractor, helpers
@@ -33,7 +31,6 @@ class Synchronizer:
         reference_source_name: str,
         extractor: Optional[AbstractExtractor] = None,
         sampling_freq: Optional[float] = None,
-        tags=None,
     ):
         """
         Create a new synchronizer. Synchronizer objects are used to remove offsets and clock offsets by stretching and
@@ -46,7 +43,6 @@ class Synchronizer:
                a ShakeExtractor instance
         :param sampling_freq: Override the frequency used to resample input data. If None, it defaults to the maximum
                input frequency
-        :param tags: TODO no idea
         """
         self.sources = sources
         self.ref_source_name = reference_source_name
@@ -54,7 +50,6 @@ class Synchronizer:
 
         self.extractor = extractor if extractor is not None else ShakeExtractor()
         self.ref_signals = self._prepare_ref_signals()
-        self.tags = tags
 
         self.sampling_freq = (
             sampling_freq
@@ -127,10 +122,6 @@ class Synchronizer:
         :return: timeshift to align the first and second synchronization point
                  for the target signal to the reference signal
         """
-        fig, axes = None, None
-        if logger.isEnabledFor(logging.INFO):
-            fig, axes = pyplot.subplots(1, 2, figsize=(15, 4))
-
         timeshifts = {}
         for index, segment in enumerate(["first", "second"]):
             logger.debug(
@@ -162,30 +153,6 @@ class Synchronizer:
             # calculate timeshift to move signal to maximize correlation
             timeshifts[segment] = max_corr_ts - sig_start
             logger.debug("Timeshift is {}.".format(str(timeshifts[segment])))
-
-            # plot shifted segments
-            if logger.isEnabledFor(logging.INFO):
-                try:
-                    df = dataframe.copy()
-                    df[sig_col] = df[sig_col].shift(1, freq=timeshifts[segment])
-                    if axes is not None:
-                        axes[index].set_title(
-                            f"{segment} segment of {ref_col} and {sig_col}"
-                        )
-                        df[[ref_col, sig_col]][ref_start:ref_end].plot(ax=axes[index])
-                except MemoryError:
-                    logger.warn(
-                        "Couldn't allocate enough memory to plot shifted segments, skipping"
-                    )
-
-        if logger.isEnabledFor(logging.INFO):
-            try:
-                if fig is not None:
-                    fig.tight_layout()
-            except MemoryError:
-                logger.warn(
-                    "Couldn't allocate enough memory to plot shifted segments, skipping"
-                )
 
         return timeshifts
 
@@ -392,8 +359,6 @@ class Synchronizer:
                     continue
 
                 table_df = pd.DataFrame()
-                if self.tags is not None:
-                    table_df = table_df.join(self.tags.data, how="outer")
 
                 for source_name, source_columns in table_spec.items():
                     # create dataframe for each source
@@ -421,8 +386,7 @@ class Synchronizer:
         # Save table with total data
         if save_total_table:
             total_table = pd.DataFrame()
-            if self.tags is not None:
-                total_table = total_table.join(self.tags.data, how="outer")
+
             for source_name, data in synced_data.items():
                 source_df = data.rename(
                     lambda col_name: f"{source_name}_{col_name}",
