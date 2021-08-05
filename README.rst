@@ -12,7 +12,7 @@ jointly readme
 .. image:: https://github.com/hpi-dhc/jointly/actions/workflows/all.yml/badge.svg
         :target: https://github.com/hpi-dhc/jointly/actions/workflows/all.yml/badge.svg
 
-.. image::https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
+.. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
         :target: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
 
 .. image:: https://readthedocs.org/projects/jointly/badge/?version=latest
