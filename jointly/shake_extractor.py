@@ -28,6 +28,7 @@ class ShakeExtractor(AbstractExtractor):
         super().__init__()
         self.start_window_length = pd.Timedelta(seconds=600)
         self.end_window_length = pd.Timedelta(seconds=600)
+        self.threshold = 0.6
 
     @property
     def start_window_length(self) -> pd.Timedelta:
@@ -57,8 +58,17 @@ class ShakeExtractor(AbstractExtractor):
                 "window lengths are given as e.g. pd.Timedelta(seconds=600)"
             )
 
-    threshold = 0.3
-    """min height for peak detection. In range [0, 1], as the data is normalized."""
+    @property
+    def threshold(self) -> float:
+        """min height for peak detection. In range [0, 1], as the data is normalized"""
+        return self._threshold
+
+    @threshold.setter
+    def threshold(self, value: float):
+        if 0 < value < 1:
+            self._threshold = value
+        else:
+            raise ValueError(f"threshold must be given in (0, 1), but you gave {value}")
 
     distance = 1500
     """distance in milliseconds in which the next peak must occur to be considered a sequence"""
@@ -109,11 +119,6 @@ class ShakeExtractor(AbstractExtractor):
         Peaks that have no adjacent peaks within ``distance`` ms are ignored.
         Sequences with less than ``min_length`` peaks are ignored.
         """
-        if not (0 <= self.threshold <= 1):
-            raise BadThresholdException(
-                "Threshold must be a value in [0, 1]. Data is normalized!"
-            )
-
         logger.debug(f"Using peak threshold {self.threshold}")
 
         # find peaks in start window

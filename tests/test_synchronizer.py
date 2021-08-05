@@ -1,9 +1,7 @@
 """Happy path tests for the synchronizer and shake extractor"""
 import os.path
 import tempfile
-import traceback
 
-import numpy as np
 import pandas as pd
 import pytest
 
