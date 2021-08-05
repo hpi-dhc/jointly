@@ -362,15 +362,18 @@ class Synchronizer:
         :param tables: ResultTableSpec to specify the export format, or None
         :param save_total_table: exports an outer join over all synchronized dataframes
         """
-        if "SYNC" in tables.keys():
+        if tables is not None and "SYNC" in tables.keys():
             raise ValueError(
-                "SYNC must not be one of the table names. It is reserved for the synchronization paramters."
+                "SYNC must not be one of the table names. "
+                "It is reserved for the synchronization parameters."
             )
 
-        if save_total_table and "TOTAL" in tables.keys():
-            raise ValueError(
-                "TOTAL must not be one of the table names, if the table with all data should be saved."
-            )
+        if save_total_table and tables is not None:
+            if "TOTAL" in tables.keys():
+                raise ValueError(
+                    "TOTAL must not be one of the table names, "
+                    "if the table with all data should be saved."
+                )
 
         sync_params = self.get_sync_params()
         synced_data = self.get_synced_data()
@@ -382,6 +385,12 @@ class Synchronizer:
         logger.info(tables)
         if tables is not None:
             for table_name, table_spec in tables.items():
+                if len(table_spec) == 0:
+                    logger.warning(
+                        f"Table entry {table_name} is missing any requested columns"
+                    )
+                    continue
+
                 table_df = pd.DataFrame()
                 if self.tags is not None:
                     table_df = table_df.join(self.tags.data, how="outer")
@@ -390,15 +399,14 @@ class Synchronizer:
                     # create dataframe for each source
                     source_df = pd.DataFrame()
                     for column in source_columns:
-                        if column in synced_data[source_name].columns:
-                            # join selected signals to device dataframe
-                            source_df = source_df.join(
-                                synced_data[source_name][column], how="outer"
+                        try:
+                            data = synced_data[source_name][column]
+                        except KeyError:
+                            raise ValueError(
+                                f"Requested non-existing {source_name}->{column}"
                             )
-                        else:
-                            logger.warning(
-                                f"Requested non-existing {column} from {source_name}"
-                            )
+                        # join selected signals to device dataframe
+                        source_df = source_df.join(data, how="outer")
                     if not source_df.empty:
                         # add device signals to general dataframe
                         source_df = source_df.rename(
