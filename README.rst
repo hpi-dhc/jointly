@@ -6,11 +6,14 @@ jointly readme
 .. image:: https://img.shields.io/pypi/v/jointly.svg
         :target: https://pypi.python.org/pypi/jointly
 
-.. image:: https://img.shields.io/travis/hpi-dhc/jointly.svg
-        :target: https://travis-ci.org/hpi-dhc/jointly
+.. image:: https://github.com/hpi-dhc/jointly/actions/workflows/deploy.yml/badge.svg
+        :target: https://github.com/hpi-dhc/jointly/actions/workflows/<WORKFLOW_FILE>/badge.svg
 
-.. image:: https://codecov.io/gh/hpi-dhc/jointly/branch/master/graph/badge.svg
-        :target: https://codecov.io/gh/hpi-dhc/jointly
+.. image:: https://github.com/hpi-dhc/jointly/actions/workflows/all.yml/badge.svg
+        :target: https://github.com/hpi-dhc/jointly/actions/workflows/<WORKFLOW_FILE>/badge.svg
+
+.. image::https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
+        :target: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
 
 .. image:: https://readthedocs.org/projects/jointly/badge/?version=latest
         :target: https://jointly.readthedocs.io/en/latest/?badge=latest
