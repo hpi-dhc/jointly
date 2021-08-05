@@ -7,8 +7,46 @@ import pandas as pd
 
 import jointly
 from jointly import ShakeExtractor, Synchronizer
-from jointly.helpers import plot_reference_columns, stretch_signals
+from jointly.helpers import plot_reference_columns, stretch_signals, calculate_magnitude
 from tests.parquet_reader import get_parquet_test_data
+
+
+def test_happy_path_faros_internal():
+    ref_data = get_parquet_test_data("faros-internal.parquet", 666)
+    target_data = get_parquet_test_data("faros-internal.parquet", 667)
+    reference_signal, target_signal = "Internal", "Faros"
+    sources = {
+        reference_signal: {"data": ref_data, "ref_column": "ACCELERATION_Z"},
+        target_signal: {"data": target_data, "ref_column": "ACCELERATION_Z"},
+    }
+    extractor = ShakeExtractor()
+    extractor.start_window_length = pd.Timedelta(seconds=17)
+    extractor.end_window_length = pd.Timedelta(seconds=10)
+    extractor.min_length = 3
+    extractor.threshold = 0.19
+
+    synchronizer = jointly.Synchronizer(sources, reference_signal, extractor)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            sync_result = synchronizer.save_pickles(tmp_dir)["SYNC"]
+        except Exception:
+            traceback.print_exc()
+            plot_reference_columns(sources)
+            assert False, "Should not throw exception"
+
+    assert np.isnan(
+        sync_result[reference_signal]["timeshift"]
+    ), "Should not have timeshift for reference signal"
+    assert (
+        sync_result[reference_signal]["stretch_factor"] == 1
+    ), "Should not stretch reference signal"
+
+    assert sync_result[target_signal]["timeshift"] == pd.Timedelta(
+        "-1 days +23:59:59.070000"
+    ), "Should have timeshift of 0 for equal signal"
+    assert (
+        sync_result[target_signal]["stretch_factor"] == 1.0506424792139077
+    ), "Should have stretching factor of 1 for equal signal"
 
 
 def test_happy_path_equal_data():

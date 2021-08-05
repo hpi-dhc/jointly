@@ -74,6 +74,11 @@ class Synchronizer:
                 raise ValueError(
                     "The `data` DataFrame must have a pd.DatetimeIndex for each source"
                 )
+            if source["data"].index.duplicated().any():
+                raise ValueError(
+                    "The input dataframe must not have duplicate index values, "
+                    "convert the data into a normalized wide format"
+                )
             if (
                 not isinstance(source["ref_column"], str)
                 or source["ref_column"] not in source["data"].columns

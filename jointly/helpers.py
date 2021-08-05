@@ -15,6 +15,16 @@ from jointly.types import SyncPairs, SourceDict, SyncPairTimeshift
 logger = logging.getLogger("jointly.helpers")
 
 
+def calculate_magnitude(
+    df: pd.DataFrame, of_cols: List[str], title: str = "Magnitude"
+) -> pd.DataFrame:
+    """Calculate the magnitude of a subset of columns from a DataFrame"""
+    data = df[of_cols]
+    result = np.sqrt(np.square(data).sum(axis=1))
+    result.name = title
+    return result.to_frame(name=title)
+
+
 def normalize(x: List[float]):
     """Normalizes signal to interval [-1, 1] with mean 0."""
     xn = x - np.mean(x)
@@ -32,8 +42,8 @@ def get_equidistant_signals(signals: pd.DataFrame, frequency: float):
         {col: signals[col].dropna().resample(freq).nearest() for col in signals.columns}
     )
     index = pd.date_range(
-        start=pd.to_datetime(signals.index.min(), unit="s"),
-        end=pd.to_datetime(signals.index.max(), unit="s"),
+        start=pd.to_datetime(df.index.min(), unit="s"),
+        end=pd.to_datetime(df.index.max(), unit="s"),
         freq=freq,
     )
     return df.set_index(index)
@@ -80,7 +90,10 @@ def stretch_signals(
     logger.debug("Use start time: {}".format(start_time))
     timedelta = df.index - start_time
     new_index = timedelta * factor + start_time
-    df.set_index(new_index, inplace=True, verify_integrity=True)
+    try:
+        df.set_index(new_index, inplace=True, verify_integrity=True)
+    except ValueError as e:
+        raise e
     return df
 
 
