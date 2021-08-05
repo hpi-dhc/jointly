@@ -18,7 +18,7 @@ from .synchronization_errors import (
 pp = pprint.PrettyPrinter()
 
 
-def get_shake_weight(x: List[pd.DatetimeIndex]):
+def _get_shake_weight(x: List[pd.DatetimeIndex]):
     """Returns a shake weight describing the importance of a shake sequence"""
     return np.median(x) + np.mean(x)
 
@@ -97,7 +97,7 @@ class ShakeExtractor(AbstractExtractor):
                 sequences[len(sequences) - 1].append(row.index)
         return sequences
 
-    def get_peak_sequences(
+    def _get_peak_sequences(
         self,
         signals: pd.DataFrame,
         column: str,
@@ -154,7 +154,7 @@ class ShakeExtractor(AbstractExtractor):
         :param shake_list: list of peak sequence value lists
         :return: start and end index values
         """
-        best_shake = max(shake_list, key=get_shake_weight)
+        best_shake = max(shake_list, key=_get_shake_weight)
 
         segment_start_time = best_shake[0].index[0] - self.time_buffer
         start_index = signal.index.get_loc(segment_start_time, method="nearest")
@@ -199,7 +199,7 @@ class ShakeExtractor(AbstractExtractor):
 
             start_window = first_timestamp + self.start_window_length
             end_window = last_timestamp - self.end_window_length
-            peak_sequences = self.get_peak_sequences(
+            peak_sequences = self._get_peak_sequences(
                 signals, column, start_window, end_window
             )
 
