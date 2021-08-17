@@ -3,7 +3,7 @@ History
 =======
 
 
-0.3.2 (2021-08-04)
+1.0.0 (2021-08-04)
 ------------------
 
 * Further improve CI/CD
@@ -11,6 +11,7 @@ History
 * add badges
 * add tests
 * add more input validation
+* changes some API parameter names and removes some functions
 
 0.2.0 (2021-05-06)
 ------------------
