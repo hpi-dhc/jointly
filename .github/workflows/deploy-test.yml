@@ -1,6 +1,10 @@
 name: Deploy to TestPyPi
 
-on: [ push ]
+on:
+  push:
+    branches:
+    - '**'        # run for all branches
+    - '!master'   # except master
 
 jobs:
     build-n-publish-testing:
