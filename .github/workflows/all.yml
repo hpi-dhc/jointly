@@ -42,7 +42,7 @@ jobs:
           COLOR=$(echo $COVERAGE | python -c "import sys; from bisect import bisect; i=bisect([0,60,70,80,95,100], int(sys.stdin.read()))-1; print(['red', 'orange', 'yellow', 'yellowgreen', 'green', 'brightgreen'][i])")
           echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
           echo "COLOR=$COLOR" >> $GITHUB_ENV
-      - if: ${{ matrix.python-version == '3.9' && github.ref == 'refs/heads/master' }}
+      - if: ${{ matrix.python-version == '3.9' && github.ref == 'refs/heads/master' && matrix.os == 'ubuntu-latest' }}
         name: Create the coverage gist
         uses: schneegans/dynamic-badges-action@v1.0.0
         with:

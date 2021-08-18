@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jointly"
-version = "1.0.1"
+version = "1.0.2"
 description = "Synchronize sensor data from accelerometer shakes"
 authors = [
     "Ariane Morassi Sasso <ariane.morassi-sasso@hpi.de>",
