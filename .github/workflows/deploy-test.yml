@@ -4,7 +4,8 @@ on:
   push:
     branches:
     - '**'        # run for all branches
-    - '!master'   # except master
+    branches-ignore:
+    - 'master'    # except master
 
 jobs:
     build-n-publish-testing:
@@ -12,6 +13,7 @@ jobs:
         steps:
         -   uses: actions/checkout@v2
         -   name: Build and publish to pypi
+            continue-on-error: true
             uses: JRubics/poetry-publish@v1.6
             with:
                 python_version: '3.7.1'
