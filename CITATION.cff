@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Ariane"
+  given-names: "Morassi-Sasso"
+  orcid: "https://orcid.org/0000-0002-3669-4599"
+- family-names: "Herdick"
+  given-names: "Arne"
+  orcid: "https://orcid.org/0000-0002-1288-3571"
+- family-names: "Felix"
+  given-names: "Musmann"
+  orcid: "https://orcid.org/0000-0001-5365-0785"
+- family-names: "Justin"
+  given-names: "Albert"
+  orcid: "https://orcid.org/0000-0002-6121-792X"
+- family-names: "Arnrich"
+  given-names: "Bert"
+  orcid: "https://orcid.org/0000-0001-8380-7667"
+title: "jointly - a signal synchronizer"
+version: 2.0.4
+doi: 10.5281/zenodo.1234
+date-released: 2017-12-18
+url: "https://github.com/github/linguist"

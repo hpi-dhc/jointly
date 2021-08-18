@@ -33,7 +33,7 @@ jobs:
       - name: Test with pytest
         run: |
           poetry run python -m pytest
-      - if: ${{ matrix.python-version == '3.9' && github.ref == 'refs/heads/master' }}
+      - if: ${{ matrix.python-version == '3.9' && github.ref == 'refs/heads/master' && matrix.os == 'ubuntu-latest' }}
         name: Calculate coverage
         run: |
           poetry run coverage run --source=jointly -m pytest
