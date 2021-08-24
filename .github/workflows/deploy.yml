@@ -2,8 +2,8 @@ name: Deploy to PyPi
 
 on:
   push:
-    branches:
-    - master
+    tags:
+      - "v*.*.*"
 
 jobs:
     build-n-publish:
