@@ -7,10 +7,10 @@ jointly readme
         :target: https://pypi.python.org/pypi/jointly
 
 .. image:: https://github.com/hpi-dhc/jointly/actions/workflows/deploy.yml/badge.svg
-        :target: https://github.com/hpi-dhc/jointly/actions/workflows/deploy.yml/badge.svg
+        :target: https://github.com/hpi-dhc/jointly/actions/workflows/deploy.yml?query=branch%3Amaster
 
 .. image:: https://github.com/hpi-dhc/jointly/actions/workflows/all.yml/badge.svg
-        :target: https://github.com/hpi-dhc/jointly/actions/workflows/all.yml/badge.svg
+        :target: https://github.com/hpi-dhc/jointly/actions/workflows/all.yml?query=branch%3Amaster
 
 .. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
         :target: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/enra64/f731de158a21515e2d6c52ed48d406ad/raw/jointly_coverage_main.json
@@ -23,6 +23,8 @@ jointly readme
      :target: https://pyup.io/repos/github/hpi-dhc/jointly/
      :alt: Updates
 
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+     :target: https://github.com/hpi-dhc/jointly/blob/master/CODE_OF_CONDUCT.md
 
 
 jointly is a python package for synchronizing sensors with accelerometer data.
