@@ -217,3 +217,5 @@ $RECYCLE.BIN/
 
 .idea
 .vscode
+
+**/tmp_test_file_gen.py
