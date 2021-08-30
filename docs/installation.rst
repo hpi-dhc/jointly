@@ -40,12 +40,13 @@ Or download the `tarball`_:
 
     $ curl  -OL https://github.com/hpi-dhc/jointly/tarball/master
 
-Once you have a copy of the source, you can install it with:
+Once you have a copy of the source, you can install it with `poetry`_:
 
 .. code-block:: console
 
-    $ python setup.py install
+    $ poetry install
 
 
 .. _Github repo: https://github.com/hpi-dhc/jointly
 .. _tarball: https://github.com/hpi-dhc/jointly/tarball/master
+.. _poetry: https://python-poetry.org/docs/#installation
