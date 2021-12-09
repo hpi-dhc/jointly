@@ -35,7 +35,7 @@ Specifically, shake all your sensors in a box before and after a trial, and join
 Jointly ingests and produces ``pandas`` ``DataFrame`` objects.
 
 * Free software: MIT license
-* Documentation: https://jointly.readthedocs.io.
+* Documentation: https://jointly.readthedocs.io
 
 
 Features
