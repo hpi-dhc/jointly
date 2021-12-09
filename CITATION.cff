@@ -17,7 +17,7 @@ authors:
   given-names: "Bert"
   orcid: "https://orcid.org/0000-0001-8380-7667"
 url: "https://github.com/hpi-dhc/jointly"
-doi: "https://zenodo.org/badge/latestdoi/303936309"
+doi: "https://doi.org/10.5281/zenodo.5770586"
 title: "Jointly: A Python package for synchronizing multiple sensors with accelerometer data"
 version: 1.0.3
 date-released: 2021-12-09
