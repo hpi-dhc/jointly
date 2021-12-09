@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jointly"
-version = "1.0.2"
+version = "1.0.3"
 description = "Synchronize sensor data from accelerometer shakes"
 authors = [
     "Ariane Morassi Sasso <ariane.morassi-sasso@hpi.de>",
@@ -47,5 +47,5 @@ pyproject-flake8 = "^0.0.1-alpha.2"
 pyarrow = "^5.0.0"
 
 [build-system]
-requires = ["poetry-core>=1.2.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

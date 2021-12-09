@@ -2,6 +2,14 @@
 History
 =======
 
+1.0.3 (2021-12-09)
+------------------
+
+* remove poetry-core version dependency
+* add information on running all tests to CONTRIBUTING.rst
+* add a statement of need
+* add documentation deep links to README.rst
+* hopefully fix RTD build
 
 1.0.2 (2021-08-04)
 ------------------

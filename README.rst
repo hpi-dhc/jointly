@@ -28,6 +28,7 @@ jointly readme
 
 
 jointly is a python package for synchronizing sensors with accelerometer data.
+You need this package if you're a researcher who has recorded accelerometer data (plus possibly other data) on multiple sensors and want to precisely synchronize the multiple data streams.
 Specifically, shake all your sensors in a box before and after a trial, and jointly will find these shakes, remove any temporal offset between sensors, and stretch the data so every clock aligns to a reference sensor.
 Jointly ingests and produces ``pandas``' ``DataFrame`` objects.
 
@@ -125,6 +126,18 @@ in the ``DataFrame`` will be synchronized together with that column.
     with tempfile.TemporaryDirectory() as tmp_dir:
         synchronizer.save_pickles(tmp_dir)
 
+Documentation Deep Links
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here you can find more information on specific topics:
+
+* `Preparing Data for Ingestion`_
+* `Tuning the Shake Detection`_
+* `Debugging the Shake Detection`_
+* `How to Save the Synchronized Data`_
+* `How to Enable Logging`_
+* `Full Explanation of the Synchronization`_
+
 Template Credits
 ----------------
 
@@ -133,3 +146,9 @@ This package was created with Cookiecutter_ and the `pyOpenSci/cookiecutter-pyop
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`pyOpenSci/cookiecutter-pyopensci`: https://github.com/pyOpenSci/cookiecutter-pyopensci
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _`Preparing Data for Ingestion`: https://jointly.readthedocs.io/en/latest/usage.html#preparing-data-for-ingestion
+.. _`Tuning the Shake Detection`: https://jointly.readthedocs.io/en/latest/usage.html#tuning-shake-detection
+.. _`Debugging the Shake Detection`: https://jointly.readthedocs.io/en/latest/usage.html#debugging
+.. _`How to Save the Synchronized Data`: https://jointly.readthedocs.io/en/latest/usage.html#saving-data
+.. _`How to Enable Logging`: https://jointly.readthedocs.io/en/latest/usage.html#logging
+.. _`Full Explanation of the Synchronization`: https://jointly.readthedocs.io/en/latest/background.html#the-syncing-process
