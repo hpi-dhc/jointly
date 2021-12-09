@@ -26,8 +26,8 @@ Jointly
 .. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
      :target: https://github.com/hpi-dhc/jointly/blob/master/CODE_OF_CONDUCT.md
      
-.. image:: https://zenodo.org/badge/303936309.svg
-   :target: https://zenodo.org/badge/latestdoi/303936309
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5770586.svg
+   :target: https://doi.org/10.5281/zenodo.5770586
 
 Jointly is a python package for synchronizing sensors with accelerometer data.
 You need this package if you're a researcher who has recorded accelerometer data (plus possibly other data) on multiple sensors and want to precisely synchronize the multiple data streams.
