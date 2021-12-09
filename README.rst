@@ -1,5 +1,5 @@
 ==============
-Jointly: A Python Package for synchronizing multiple sensors with accelerometers
+Jointly: Jointly: A Python package for synchronizing multiple sensors with accelerometer data
 ==============
 
 
