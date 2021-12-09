@@ -109,6 +109,11 @@ To run a subset of tests::
 
     $ py.test tests.test_jointly
 
+
+To run all tests::
+
+    $ py.test tests.test_jointly
+
 Deploying
 ---------
 
