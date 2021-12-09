@@ -30,7 +30,7 @@ jointly readme
 jointly is a python package for synchronizing sensors with accelerometer data.
 You need this package if you're a researcher who has recorded accelerometer data (plus possibly other data) on multiple sensors and want to precisely synchronize the multiple data streams.
 Specifically, shake all your sensors in a box before and after a trial, and jointly will find these shakes, remove any temporal offset between sensors, and stretch the data so every clock aligns to a reference sensor.
-Jointly ingests and produces ``pandas``' ``DataFrame`` objects.
+Jointly ingests and produces ``pandas`` ``DataFrame`` objects.
 
 * Free software: MIT license
 * Documentation: https://jointly.readthedocs.io.
