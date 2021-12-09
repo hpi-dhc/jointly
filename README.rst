@@ -154,3 +154,8 @@ This package was created with Cookiecutter_ and the `pyOpenSci/cookiecutter-pyop
 .. _`How to Save the Synchronized Data`: https://jointly.readthedocs.io/en/latest/usage.html#saving-data
 .. _`How to Enable Logging`: https://jointly.readthedocs.io/en/latest/usage.html#logging
 .. _`Full Explanation of the Synchronization`: https://jointly.readthedocs.io/en/latest/background.html#the-syncing-process
+
+Citation
+----------------
+
+Sasso, A., Herdick, A., Musmann, F., Albert, J., & Arnrich, B. (2021). Jointly: A Python package for synchronizing multiple sensors with accelerometer data (Version 1.0.3) [Computer software]. https://doi.org/https://doi.org/10.5281/zenodo.5770586
