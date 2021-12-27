@@ -1,4 +1,4 @@
-"""Contains plotting helpers"""
+"""Contains various helper functions useful in conjunction with or internally to jointly."""
 import logging
 from pprint import pprint
 from typing import List, Tuple, Iterable
@@ -15,7 +15,12 @@ logger = logging.getLogger("jointly.helpers")
 def calculate_magnitude(
     df: pd.DataFrame, of_cols: List[str], title: str = "Magnitude"
 ) -> pd.DataFrame:
-    """Calculate the magnitude of a subset of columns from a DataFrame"""
+    """
+    Calculate the magnitude of a subset of columns from a DataFrame.
+
+    Will return 0 if the input data is NaN to allow future algorithms
+    to continue working despite the NaN in the input values.
+    """
     data = df[of_cols]
     result = np.sqrt(np.square(data).sum(axis=1))
     result.name = title
@@ -107,6 +112,9 @@ def get_stretch_factor(
     Get the stretch factor required to stretch the duration between segments such that it will fit exactly to the
     signal when shifted by the amount given by timeshifts.
 
+    This is a function that should basically exclusively be used within jointly, as the parameters are produced during
+    the synchronization process.
+
     :param segments: the segment instance containing the segment info to be stretched
     :param timeshifts: the timeshifts that should be applied to make the signal align to the reference signal
     :return: a float as described above
@@ -135,6 +143,10 @@ def verify_segments(signals: Iterable[str], segments: SyncPairs):
 def get_segment_data(
     dataframe: pd.DataFrame, segments: SyncPairs, col: str, segment: str
 ) -> Tuple[pd.Timestamp, pd.Timestamp, pd.DataFrame]:
+    """
+    Return a 3-tuple of start and end indices plus data
+    within that timeframe of the given column in the given dataframe.
+    """
     start = segments[col][segment]["start"]
     end = segments[col][segment]["end"]
     return start, end, dataframe[col][start:end]

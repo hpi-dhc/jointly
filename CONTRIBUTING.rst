@@ -1,4 +1,5 @@
 .. highlight:: shell
+.. _contributing_label:
 
 ============
 Contributing
@@ -6,6 +7,9 @@ Contributing
 
 Contributions are welcome, and they are greatly appreciated! Every little bit
 helps, and credit will always be given.
+
+We would appreciate a feature suggestion issue before you create a PR so we can
+discuss the feature, its use, and its implementation.
 
 You can contribute in many ways:
 
@@ -107,12 +111,12 @@ Tips
 
 To run a subset of tests::
 
-    $ py.test tests.test_jointly
+    $ py.test tests/test_examples.py
 
 
 To run all tests::
 
-    $ py.test tests.test_jointly
+    $ py.test
 
 Deploying
 ---------
@@ -120,5 +124,6 @@ Deploying
 A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed, including an entry in HISTORY.rst and an update of the old version code
 in ``docs/conf.py`` and ``pyproject.toml``.
+Please also link the PR in your history entry.
 
 GitHub will then deploy to PyPI if tests pass.
