@@ -2,6 +2,13 @@
 History
 =======
 
+1.0.4 (2021-12-27)
+------------------
+
+* fix contributing.rst guide to testing
+* improve documentation problems
+* c.f. https://github.com/hpi-dhc/jointly/pull/12
+
 1.0.3 (2021-12-09)
 ------------------
 
