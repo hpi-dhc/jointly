@@ -54,6 +54,8 @@ Install the package from pypi:
 
     pip install jointly
 
+You might want to check out our :ref:`contributing_label` guide in case you want to edit the package.
+
 Usage
 -----
 

@@ -43,6 +43,14 @@ jointly.helpers
    :undoc-members:
    :show-inheritance:
 
+jointly.helpers_plotting
+---------------
+
+.. automodule:: jointly.helpers_plotting
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 jointly.abstract\_extractor
 ---------------------------
 
@@ -56,15 +64,6 @@ jointly.log
 -----------
 
 .. automodule:: jointly.log
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-jointly.segment\_selector
--------------------------
-
-.. automodule:: jointly.segment_selector
    :members:
    :undoc-members:
    :show-inheritance:
