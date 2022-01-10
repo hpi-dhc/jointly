@@ -19,5 +19,5 @@ authors:
 url: "https://github.com/hpi-dhc/jointly"
 doi: "https://doi.org/10.5281/zenodo.5833858"
 title: "Jointly: A Python package for synchronizing multiple sensors with accelerometer data"
-version: 1.0.3
-date-released: 2021-12-09
+version: 1.0.4
+date-released: 2021-01-10
