@@ -163,4 +163,4 @@ This package was created with Cookiecutter_ and the `pyOpenSci/cookiecutter-pyop
 Citation
 --------
 
-Herdick, A., Musmann, F., Sasso, A., Albert, J., & Arnrich, B. (2021). Jointly: A Python package for synchronizing multiple sensors with accelerometer data (Version 1.0.3) [Computer software]. https://doi.org/https://doi.org/10.5281/zenodo.5770586
+Arne Herdick, Felix Musmann, Ariane Sasso, Justin Albert, & Bert Arnrich. (2022). Jointly: A Python package for synchronizing multiple sensors with accelerometer data (1.0.4). Zenodo. https://doi.org/10.5281/zenodo.5833858
