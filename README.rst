@@ -32,10 +32,7 @@ Jointly
 .. image:: https://tinyurl.com/y22nb8up
    :target: https://github.com/pyOpenSci/software-review/issues/45
 
-Jointly is a python package for synchronizing sensors with accelerometer data.
-You need this package if you're a researcher who has recorded accelerometer data (plus possibly other data) on multiple sensors and want to precisely synchronize the multiple data streams.
-Specifically, shake all your sensors in a box before and after a trial, and jointly will find these shakes, remove any temporal offset between sensors, and stretch the data so every clock aligns to a reference sensor.
-Jointly ingests and produces ``pandas`` ``DataFrame`` objects.
+Jointly is a python package for synchronizing sensors with accelerometer data. You need this package if you're a researcher who has recorded accelerometer data (plus possibly other data) on multiple sensors and wants to synchronize the multiple data streams precisely. Specifically, shake all your sensors together before and after a study and jointly will find these shakes, remove any temporal offset between sensors, and stretch the data so every clock aligns with a reference sensor. Jointly ingests and produces ``pandas DataFrame`` objects.
 
 * Free software: MIT license
 * Documentation: https://jointly.readthedocs.io
