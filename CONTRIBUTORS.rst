@@ -14,6 +14,7 @@ Bug Fixes and Error Spotting
 ----------------------------
 
 * Justin Albert <justin.albert@hpi.de>
+* Martin Schlegel <martin.schlegel@hpi.de>
 
 
 Mentor
