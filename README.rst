@@ -41,9 +41,9 @@ Jointly is a python package for synchronizing sensors with accelerometer data. Y
 Features
 --------
 
-* detect and compare shakes in multiple sensor data streams
-* remove temporal offsets in the data
-* remove clock speed offsets by stretching the data
+* Detect and compare shakes in multiple sensor data streams
+* Remove temporal offsets in the data
+* Remove clock speed offsets by stretching the data
 
 Installation
 ------------
@@ -54,7 +54,7 @@ Install the package from pypi:
 
     pip install jointly
 
-You might want to check out our :ref:`contributing_label` guide in case you want to edit the package.
+You might want to check out our `contributing guide`_ in case you want to edit the package.
 
 Usage
 -----
@@ -156,6 +156,7 @@ This package was created with Cookiecutter_ and the `pyOpenSci/cookiecutter-pyop
 .. _`How to Save the Synchronized Data`: https://jointly.readthedocs.io/en/latest/usage.html#saving-data
 .. _`How to Enable Logging`: https://jointly.readthedocs.io/en/latest/usage.html#logging
 .. _`Full Explanation of the Synchronization`: https://jointly.readthedocs.io/en/latest/background.html#the-syncing-process
+.. _`contributing guide`: https://jointly.readthedocs.io/en/latest/contributing.html
 
 Citation
 --------
